@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reservations - Scholarly Archive</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+
+<!-- SideNavBar (Shared Component) -->
+<aside id="app-sidebar"></aside>
+<script src="../js/nav.js"></script>
+
+<!-- Main Content -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- Header -->
+<header class="bg-soft-parchment border-b border-dusty-rose/20 sticky top-0 z-10">
+    <div class="flex justify-between items-center px-lg py-sm h-16 w-full">
+        <h2 class="font-headline-md text-deep-pine font-bold">Reservations</h2>
+        <div class="flex items-center gap-sm">
+            <button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-dusty-rose/20">
+                <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main -->
+<main class="flex-1 p-xl overflow-y-auto">
+    <div class="max-w-5xl mx-auto">
+        <!-- Tabs -->
+        <div class="flex gap-4 mb-8 border-b border-dusty-rose/20">
+            <button id="tab-pending" onclick="switchTab('pending')" class="pb-3 px-2 font-label-lg text-label-lg border-b-2 border-teal-blue text-teal-blue transition-colors">My Reservations</button>
+            <button id="tab-all" onclick="switchTab('all')" class="pb-3 px-2 font-label-lg text-label-lg border-b-2 border-transparent text-dusty-rose hover:text-teal-blue transition-colors hidden">All Reservations (Librarian)</button>
+        </div>
+
+        <!-- Reserve a Book CTA -->
+        <div class="bg-deep-pine text-soft-parchment rounded-xl p-md flex justify-between items-center mb-8">
+            <div>
+                <h3 class="font-headline-sm text-headline-sm font-bold">Can't find what you want?</h3>
+                <p class="font-body-sm text-sage-green mt-1">Browse the catalog and reserve books that are currently borrowed.</p>
+            </div>
+            <a href="catalog.html" class="bg-sage-green text-white font-label-lg px-6 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">menu_book</span> Browse Catalog
+            </a>
+        </div>
+
+        <!-- Reservations Table -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl overflow-hidden shadow-sm">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex justify-between items-center">
+                <h3 id="table-title" class="font-headline-sm text-deep-pine font-semibold">My Reservations</h3>
+                <span id="reservation-count" class="bg-soft-parchment text-deep-pine font-label-md px-3 py-1 rounded-full text-xs">Loading...</span>
+            </div>
+            <div id="reservations-list" class="divide-y divide-dusty-rose/10">
+                <div class="px-md py-8 text-center text-dusty-rose font-body-sm">Loading reservations...</div>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<script>
+let currentRole = 'student';
+let currentTab = 'pending';
+
+function showToast(message, type = 'success') {
+    const existing = document.getElementById('toast-notification');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    const bgColor = type === 'success' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+    const icon = type === 'success' ? 'check_circle' : 'error';
+    toast.className = `fixed bottom-6 right-6 ${bgColor} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md border border-dusty-rose/20`;
+    toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tab-pending').className = `pb-3 px-2 font-label-lg text-label-lg border-b-2 ${tab === 'pending' ? 'border-teal-blue text-teal-blue' : 'border-transparent text-dusty-rose hover:text-teal-blue'} transition-colors`;
+    document.getElementById('tab-all').className = `pb-3 px-2 font-label-lg text-label-lg border-b-2 ${tab === 'all' ? 'border-teal-blue text-teal-blue' : 'border-transparent text-dusty-rose hover:text-teal-blue'} transition-colors hidden`;
+    if (currentRole === 'librarian') document.getElementById('tab-all').classList.remove('hidden');
+    document.getElementById('table-title').textContent = tab === 'pending' ? 'My Reservations' : 'All Reservations';
+    loadReservations();
+}
+
+async function cancelReservation(id) {
+    const { error } = await window.sbClient.from('reservations').delete().eq('id', id);
+    if (error) showToast('Failed to cancel: ' + error.message, 'error');
+    else { showToast('Reservation cancelled.'); loadReservations(); }
+}
+
+async function markReady(id) {
+    const { error } = await window.sbClient.from('reservations').update({ status: 'ready' }).eq('id', id);
+    if (error) showToast('Failed to update: ' + error.message, 'error');
+    else { showToast('Marked as Ready for Pickup!'); loadReservations(); }
+}
+
+async function loadReservations() {
+    const list = document.getElementById('reservations-list');
+    list.innerHTML = '<div class="px-md py-8 text-center text-dusty-rose font-body-sm">Loading...</div>';
+
+    const { data: { session } } = await window.sbClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    let query = window.sbClient.from('reservations').select('*, books(title, author, isbn), library_users(full_name)');
+    if (currentTab === 'pending' || currentRole === 'student') {
+        query = query.eq('user_id', session.user.id);
+    }
+    query = query.order('created_at', { ascending: false });
+
+    const { data: reservations, error } = await query;
+    if (error) { list.innerHTML = `<div class="px-md py-8 text-center text-error font-body-sm">Error: ${error.message}</div>`; return; }
+
+    document.getElementById('reservation-count').textContent = `${reservations.length} Reservation${reservations.length !== 1 ? 's' : ''}`;
+
+    if (reservations.length === 0) {
+        list.innerHTML = `<div class="px-md py-10 text-center">
+            <span class="material-symbols-outlined text-[48px] text-dusty-rose/50 block mb-3">bookmark</span>
+            <p class="font-body-md text-dusty-rose">No reservations found. <a href="catalog.html" class="text-teal-blue hover:underline">Browse the catalog</a> to reserve books.</p>
+        </div>`;
+        return;
+    }
+
+    const statusColors = { pending: 'bg-yellow-100 text-yellow-800', ready: 'bg-green-100 text-green-800', cancelled: 'bg-red-100 text-red-800' };
+
+    list.innerHTML = reservations.map(r => {
+        const statusColor = statusColors[r.status] || 'bg-gray-100 text-gray-700';
+        const canCancel = r.status === 'pending';
+        const librarianControls = currentRole === 'librarian' && r.status === 'pending'
+            ? `<button onclick="markReady('${r.id}')" class="text-teal-blue font-label-md hover:underline">Mark Ready</button>` : '';
+        const userInfo = currentRole === 'librarian' ? `<span class="font-label-md text-dusty-rose">By: ${r.library_users?.full_name || 'Unknown'}</span>` : '';
+
+        return `<div class="px-md py-4 flex items-center justify-between gap-4">
+            <div class="flex-1 min-w-0">
+                <p class="font-body-md text-deep-pine font-semibold truncate">${r.books?.title || 'Unknown Book'}</p>
+                <p class="font-body-sm text-dusty-rose">${r.books?.author || ''} ${userInfo ? '· ' + r.library_users?.full_name : ''}</p>
+                <p class="font-label-md text-dusty-rose/60 mt-1">Reserved: ${new Date(r.created_at).toLocaleDateString()}</p>
+            </div>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColor}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
+                ${librarianControls}
+                ${canCancel ? `<button onclick="cancelReservation('${r.id}')" class="text-error font-label-md hover:underline">Cancel</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function init() {
+    const { data: { session } } = await window.sbClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const avatarUrl = session.user.user_metadata?.profile_picture_url;
+    if (avatarUrl) document.getElementById('user-avatar').src = avatarUrl;
+
+    const { data: profile } = await window.sbClient.from('library_users').select('role, full_name').eq('id', session.user.id).single();
+    if (profile?.role === 'librarian') {
+        currentRole = 'librarian';
+        const portalLabel = document.getElementById('portal-label');
+        if (portalLabel) portalLabel.textContent = 'Librarian Portal';
+        
+        const tabAll = document.getElementById('tab-all');
+        if (tabAll) tabAll.classList.remove('hidden');
+        
+        const navStudents = document.getElementById('nav-librarian-students') || document.getElementById('nav-students');
+        if (navStudents) navStudents.classList.remove('hidden');
+        
+        const navReports = document.getElementById('nav-librarian-reports') || document.getElementById('nav-reports');
+        if (navReports) navReports.classList.remove('hidden');
+    }
+    loadReservations();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initNav().then(() => initNotifications());
+    init();
+});
+</script>
+</body></html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Reset Password - Library Management System</title>
+    <link href="../assets/css/tailwind.css" rel="stylesheet">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <style>
+      .material-symbols-outlined {font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;}
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden">
+    <div class="w-full max-w-4xl flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl border border-dusty-rose/20 bg-surface-container-lowest">
+        <!-- Left Panel Branding -->
+        <div class="hidden md:flex flex-col w-1/2 bg-deep-pine text-soft-parchment p-xl relative overflow-hidden">
+            <img alt="Library Interior" class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANSi7OpCYBEh2boA1RCnePlhYDU2YX--jIw6ubvRue8fAbcd1SLcTButgwiP..."/>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                    <span class="material-symbols-outlined text-[48px] mb-md" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+                    <h1 class="font-display-lg text-display-lg text-soft-parchment mb-sm">Scholarly Archive</h1>
+                    <p class="font-body-lg text-body-lg text-primary-fixed-dim">Reset your password to regain access to your library account.</p>
+                </div>
+                <div class="bg-primary-container/80 backdrop-blur p-md rounded-lg border border-sage-green/30">
+                    <p class="font-body-sm italic text-surface-container-high">"Knowledge is the key that unlocks the doors of imagination."</p>
+                </div>
+            </div>
+        </div>
+        <!-- Right Panel Form -->
+        <div class="w-full md:w-1/2 p-lg md:p-xl flex flex-col bg-soft-parchment">
+            <div class="mb-md text-center md:text-left">
+                <h2 class="font-headline-lg text-headline-lg text-deep-pine mb-xs">Reset Password</h2>
+                <p class="font-body-md text-body-md text-dusty-rose">Enter your email to receive a reset link.</p>
+            </div>
+            <form id="reset-form" class="flex flex-col gap-md flex-grow">
+                <div class="flex flex-col gap-xs">
+                    <label class="font-label-md text-label-md text-deep-pine" for="reset-email">Email Address</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">email</span>
+                        <input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="reset-email" placeholder="you@domain.com" type="email" required/>
+                    </div>
+                </div>
+                <button id="reset-btn" class="mt-md w-full py-sm px-md bg-primary hover:bg-primary/90 text-on-primary font-label-lg rounded-lg flex items-center justify-center gap-2 transition-colors" type="submit">
+                    Send Reset Link <span class="material-symbols-outlined text-[20px]">mail</span>
+                </button>
+                <div id="status-msg" class="hidden mt-sm p-sm rounded-lg font-body-sm text-center"></div>
+            </form>
+            <div class="mt-lg pt-md border-t border-dusty-rose/20 text-center">
+                <p class="font-body-sm text-body-sm text-dusty-rose">
+                    Remembered your password? <a class="font-label-md text-label-md text-deep-pine hover:text-teal-blue" href="login.html">Log In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        function showStatus(msg, isError) {
+            const el = document.getElementById('status-msg');
+            el.textContent = msg;
+            el.className = `mt-sm p-sm rounded-lg font-body-sm text-center ${isError ? 'bg-error text-on-error' : 'bg-secondary text-on-secondary'}`;
+        }
+        document.getElementById('reset-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reset-email').value.trim();
+            const btn = document.getElementById('reset-btn');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Sending...';
+            btn.disabled = true;
+            try {
+                const { error } = await window.sbClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/pages/login.html`
+                });
+                if (error) throw error;
+                showStatus('Reset email sent! Check your inbox.', false);
+            } catch (err) {
+                console.error(err);
+                showStatus(err.message || 'Failed to send reset email.', true);
+            } finally {
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Scholarly Archive LMS</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-md">
+<div class="w-full max-w-4xl flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl border border-dusty-rose/20 bg-surface-container-lowest">
+<!-- Left Panel: Branding & Imagery -->
+<div class="hidden md:flex flex-col md:w-1/2 bg-deep-pine text-soft-parchment p-xl relative overflow-hidden">
+<img alt="Library Interior" class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay" data-alt="A grand, traditional university library hall featuring soaring arches, warm wooden bookshelves reaching the ceiling, and soft ambient light filtering through tall windows, casting a serene, scholarly atmosphere. The image perfectly embodies the 'Scholarly Archive' aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANSi7OpCYBEh2boA1RCnePlhYDu2YX--jIw6ubvRue8fAbcd1SLcTButgwcI_pDV6dGKHDY-3pemDCgmKdcfbqaZ9zyDVuA-wobfOydMVvthHB1Ka9PoUu8LjdxRr4i9LiXdX-Tr2nTO5nkqnJA0j2gFVfezU9xfwKzuXaVuQh3__0tThNCvQTP0JQrCfioITUxWh3BkYekmsjq8R_j3SL9KgZUaoUHb6JOkmkhBAqlObWpNrSfeXt7sDym04tuWzGJ_5pmin_bZk"/>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<span class="material-symbols-outlined text-[48px] mb-md" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<h1 class="font-display-lg text-display-lg text-soft-parchment mb-sm">Scholarly Archive</h1>
+<p class="font-body-lg text-body-lg text-primary-fixed-dim">A unified Library Management System designed for focus, reliability, and tactile efficiency.</p>
+</div>
+<div class="bg-primary-container/80 backdrop-blur-sm p-md rounded-lg border border-sage-green/30">
+<p class="font-body-sm text-body-sm italic text-surface-container-high">"Organizing the world's academic knowledge, one shelf at a time."</p>
+</div>
+</div>
+</div>
+<!-- Right Panel: Login/Signup Interface -->
+<div class="w-full md:w-1/2 p-lg md:p-xl flex flex-col bg-soft-parchment">
+<div class="mb-md text-center md:text-left">
+<h2 id="form-title" class="font-headline-lg text-headline-lg text-deep-pine mb-xs">Welcome Back</h2>
+<p id="form-subtitle" class="font-body-md text-body-md text-dusty-rose">Please log in to continue to your account.</p>
+</div>
+
+<!-- Auth Mode Toggle (Login / Sign Up) -->
+<div class="flex p-1 bg-surface-container-high rounded-lg mb-md border border-dusty-rose/20">
+<button id="tab-login" onclick="switchMode('login')" class="flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]">login</span> Log In
+</button>
+<button id="tab-signup" onclick="switchMode('signup')" class="flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">person_add</span> Sign Up
+</button>
+</div>
+
+<!-- Role Toggle -->
+<div class="flex p-1 bg-surface-container-high rounded-lg mb-md border border-dusty-rose/20">
+<button id="role-student" onclick="switchRole('student')" class="flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]">school</span> Student
+</button>
+<button id="role-librarian" onclick="switchRole('librarian')" class="flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">badge</span> Librarian
+</button>
+</div>
+
+<!-- Status Message -->
+<div id="status-msg" class="hidden mb-md p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+
+<!-- Auth Form -->
+<form id="auth-form" class="flex flex-col gap-md flex-grow" novalidate>
+<!-- Full Name (Sign Up only) -->
+<div id="name-field" class="flex flex-col gap-xs hidden">
+<label class="font-label-md text-label-md text-deep-pine" for="fullName">Full Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">badge</span>
+<input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="fullName" placeholder="e.g. John Doe" type="text"/>
+</div>
+</div>
+
+<!-- Email / Username / ID -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-deep-pine" for="userId">Email Address or Username</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">account_circle</span>
+<input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="userId" placeholder="username or email" type="text" required/>
+</div>
+</div>
+
+<!-- Password -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-deep-pine" for="password">Password</label>
+<a id="forgot-link" class="font-label-md text-label-md text-teal-blue hover:underline" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">lock</span>
+<input class="w-full pl-10 pr-10 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="password" placeholder="••••••••" type="password" required minlength="6"/>
+<button id="toggle-pw" class="absolute right-3 top-1/2 -translate-y-1/2 text-dusty-rose hover:text-deep-pine" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+</div>
+</div>
+
+<!-- Confirm Password (Sign Up only) -->
+<div id="confirm-pw-field" class="flex flex-col gap-xs hidden">
+<label class="font-label-md text-label-md text-deep-pine" for="confirmPassword">Confirm Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">lock</span>
+<input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="confirmPassword" placeholder="••••••••" type="password"/>
+</div>
+</div>
+
+<!-- Submit -->
+<button id="submit-btn" class="mt-md w-full py-sm px-md bg-sage-green hover:bg-secondary text-surface-container-lowest font-label-lg text-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2" type="submit">
+Log In <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+
+<div class="mt-lg pt-md border-t border-dusty-rose/20 text-center">
+<p id="switch-prompt" class="font-body-sm text-body-sm text-dusty-rose">
+Don't have an account? <a class="font-label-md text-label-md text-deep-pine hover:text-teal-blue transition-colors cursor-pointer" onclick="switchMode('signup')">Create one now</a>
+</p>
+</div>
+</div>
+</div>
+
+<script>
+    let currentMode = 'login';
+    let currentRole = 'student';
+
+    function switchMode(mode) {
+        currentMode = mode;
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
+        const nameField = document.getElementById('name-field');
+        const confirmField = document.getElementById('confirm-pw-field');
+        const forgotLink = document.getElementById('forgot-link');
+        const submitBtn = document.getElementById('submit-btn');
+        const formTitle = document.getElementById('form-title');
+        const formSubtitle = document.getElementById('form-subtitle');
+        const switchPrompt = document.getElementById('switch-prompt');
+        hideStatus();
+
+        if (mode === 'signup') {
+            tabSignup.className = 'flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all';
+            tabLogin.className = 'flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2';
+            nameField.classList.remove('hidden');
+            confirmField.classList.remove('hidden');
+            forgotLink.classList.add('hidden');
+            submitBtn.innerHTML = 'Create Account <span class="material-symbols-outlined text-[20px]">person_add</span>';
+            formTitle.textContent = 'Create Account';
+            formSubtitle.textContent = 'Register as a new library member.';
+            switchPrompt.innerHTML = 'Already have an account? <a class="font-label-md text-label-md text-deep-pine hover:text-teal-blue transition-colors cursor-pointer" onclick="switchMode(\'login\')">Log in here</a>';
+        } else {
+            tabLogin.className = 'flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all';
+            tabSignup.className = 'flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2';
+            nameField.classList.add('hidden');
+            confirmField.classList.add('hidden');
+            forgotLink.classList.remove('hidden');
+            submitBtn.innerHTML = 'Log In <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
+            formTitle.textContent = 'Welcome Back';
+            formSubtitle.textContent = 'Please log in to continue to your account.';
+            switchPrompt.innerHTML = 'Don\'t have an account? <a class="font-label-md text-label-md text-deep-pine hover:text-teal-blue transition-colors cursor-pointer" onclick="switchMode(\'signup\')">Create one now</a>';
+        }
+    }
+
+    function switchRole(role) {
+        currentRole = role;
+        const btnStudent = document.getElementById('role-student');
+        const btnLibrarian = document.getElementById('role-librarian');
+        if (role === 'librarian') {
+            btnLibrarian.className = 'flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all';
+            btnStudent.className = 'flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2';
+        } else {
+            btnStudent.className = 'flex-1 py-sm px-4 rounded-md bg-surface-container-lowest text-deep-pine font-label-lg text-label-lg shadow-sm flex items-center justify-center gap-2 transition-all';
+            btnLibrarian.className = 'flex-1 py-sm px-4 rounded-md text-dusty-rose hover:text-deep-pine font-label-lg text-label-lg transition-colors flex items-center justify-center gap-2';
+        }
+    }
+
+    function showStatus(msg, isError) {
+        const el = document.getElementById('status-msg');
+        el.textContent = msg;
+        el.className = `mb-md p-sm rounded-lg font-body-sm text-body-sm text-center ${isError ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`;
+    }
+    function hideStatus() {
+        document.getElementById('status-msg').className = 'hidden mb-md p-sm rounded-lg font-body-sm text-body-sm text-center';
+    }
+
+    window.resendVerification = async function(email) {
+        showStatus('Sending verification email...', false);
+        const { error } = await window.sbClient.auth.resend({
+            type: 'signup',
+            email: email
+        });
+        if (error) {
+            showStatus('Failed to resend: ' + error.message, true);
+        } else {
+            showStatus('Verification email resent! Please check your inbox and spam folder.', false);
+        }
+    };
+
+    // Password visibility toggle
+    document.getElementById('toggle-pw').addEventListener('click', function() {
+        const pw = document.getElementById('password');
+        const icon = this.querySelector('span');
+        if (pw.type === 'password') {
+            pw.type = 'text';
+            icon.textContent = 'visibility';
+        } else {
+            pw.type = 'password';
+            icon.textContent = 'visibility_off';
+        }
+    });
+
+    // Form submission
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        let email = document.getElementById('userId').value.trim();
+        const password = document.getElementById('password').value;
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (!email) {
+            showStatus('Invalid data input: Please enter your email address or username.', true);
+            return;
+        }
+        if (!password) {
+            showStatus('Invalid data input: Please enter your password.', true);
+            return;
+        }
+
+        // Allow username by appending dummy domain if no '@' is present
+        let authIdentifier = email;
+        if (!email.includes('@')) {
+            if (currentRole === 'librarian') {
+                showStatus('Invalid data input: Librarians must use a valid email address.', true);
+                return;
+            }
+            authIdentifier = `${email}@student.scholarly.local`;
+        } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showStatus('Invalid data input: Please enter a valid email address.', true);
+                return;
+            }
+        }
+
+        if (currentMode === 'signup') {
+            const fullName = document.getElementById('fullName').value.trim();
+            const confirmPw = document.getElementById('confirmPassword').value;
+
+            if (!fullName) { showStatus('Invalid data input: Please enter your full name.', true); return; }
+            if (password !== confirmPw) { showStatus('Invalid data input: Passwords do not match.', true); return; }
+            if (password.length < 6) { showStatus('Invalid data input: Password must be at least 6 characters.', true); return; }
+            
+
+        }
+
+        const originalHTML = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Please wait...';
+        submitBtn.disabled = true;
+
+        try {
+            if (currentMode === 'signup') {
+                // Sign Up
+                const fullName = document.getElementById('fullName').value.trim();
+                const { data, error } = await window.sbClient.auth.signUp({
+                    email: authIdentifier,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: fullName,
+                            role: currentRole,
+                            library_id: email.split('@')[0]
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                if (data.session) {
+                    showStatus('Account created! Logging you in...', false);
+                    setTimeout(() => {
+                        window.location.href = currentRole === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
+                    }, 800);
+                } else {
+                    showStatus('Account created! Please check your email to verify your account before logging in. (If you are the developer, you can disable email confirmation in Supabase settings).', false);
+                    setTimeout(() => switchMode('login'), 3500);
+                }
+
+            } else {
+                // Log In
+                const { data, error } = await window.sbClient.auth.signInWithPassword({
+                    email: authIdentifier,
+                    password: password
+                });
+
+                if (error) {
+                    if (error.message && error.message.includes('Email not confirmed')) {
+                        const el = document.getElementById('status-msg');
+                        el.innerHTML = `Email not confirmed. <a href="#" onclick="resendVerification('${email}'); return false;" class="underline text-teal-blue hover:text-deep-pine font-bold">Resend verification email</a>`;
+                        el.className = 'mb-md p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
+                        el.classList.remove('hidden');
+                        throw new Error('SILENT');
+                    }
+                    throw error;
+                }
+
+                // Authorization check: Verify user's actual role
+                const actualRole = data.user.user_metadata?.role || 'student';
+                
+                if (currentRole === 'librarian' && actualRole !== 'librarian') {
+                    await window.sbClient.auth.signOut();
+                    showStatus('Authorization Failed: You do not have librarian privileges.', true);
+                    return;
+                }
+
+                showStatus('Login successful! Redirecting...', false);
+                setTimeout(() => {
+                    if (actualRole === 'librarian') {
+                        window.location.href = 'librarian-dashboard.html';
+                    } else {
+                        window.location.href = 'student-dashboard.html';
+                    }
+                }, 800);
+            }
+        } catch (err) {
+            if (err.message !== 'SILENT') {
+                showStatus('Invalid data input: ' + (err.message || 'An error occurred. Please try again.'), true);
+            }
+        } finally {
+            submitBtn.innerHTML = originalHTML;
+            submitBtn.disabled = false;
+        }
+    });
+
+    (async () => {
+        const { data: { session } } = await window.sbClient.auth.getSession();
+        if (session) {
+            const actualRole = session.user.user_metadata?.role || 'student';
+            showStatus('You are already logged in. Redirecting...', false);
+            setTimeout(() => {
+                window.location.href = actualRole === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
+            }, 800);
+        }
+    })();
+</script>
+
+<!-- Forgot Password Modal (Moved outside of auth-form to prevent nested form bug) -->
+<div id="forgot-modal" class="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-[200] hidden">
+  <div class="bg-surface-container-lowest p-6 rounded-xl shadow-xl w-full max-w-md relative">
+    <h2 class="font-headline-md mb-4">Reset Password</h2>
+    <form id="forgot-form" class="space-y-4">
+      <div>
+        <label class="font-label-md mb-1 block" for="forgot-email">Email Address</label>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-dusty-rose">mail</span>
+          <input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="forgot-email" placeholder="username@gmail.com" type="email" required />
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-4">
+        <button type="button" id="forgot-cancel" class="px-4 py-2 bg-surface border border-outline rounded">Cancel</button>
+        <button type="submit" class="px-4 py-2 bg-primary text-on-primary rounded">Send Reset</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.supabase) {
+    console.error('Supabase client not initialized');
+    showStatus('Authentication service unavailable. Please try again later.', true);
+    return;
+  }
+  const forgotLink = document.getElementById('forgot-link');
+  const modal = document.getElementById('forgot-modal');
+  const cancelBtn = document.getElementById('forgot-cancel');
+  const form = document.getElementById('forgot-form');
+
+  if (forgotLink && modal) {
+    forgotLink.addEventListener('click', e => {
+      e.preventDefault();
+      modal.classList.remove('hidden');
+    });
+  }
+
+  if (cancelBtn && modal) {
+    cancelBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
+
+  if (form && modal) {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) {
+        showStatus('Please enter your email.', true);
+        return;
+      }
+      try {
+        console.log('Attempting password reset for', email);
+        const { error } = await window.sbClient.auth.resetPasswordForEmail(email);
+        if (error) throw error;
+        console.log('Reset email sent successfully');
+        showStatus('Password reset email sent. Check your inbox.', false);
+        modal.classList.add('hidden');
+      } catch (err) {
+        console.error('Reset error:', err);
+        showStatus(err.message || 'Failed to send reset email.', true);
+      }
+    });
+  }
+});
+</script>
+
+</body></html>

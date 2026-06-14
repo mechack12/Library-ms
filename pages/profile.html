@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Profile - Scholarly Archive</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+
+<aside id="app-sidebar"></aside>
+
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<header class="bg-soft-parchment border-b border-dusty-rose/20 sticky top-0 z-10">
+    <div class="flex justify-between items-center px-lg py-sm h-16">
+        <h2 class="font-headline-md text-deep-pine font-bold">My Profile</h2>
+        <div class="flex items-center gap-sm">
+            <button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-dusty-rose/20">
+                <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 p-xl">
+    <div class="max-w-3xl mx-auto space-y-6">
+
+        <!-- Profile Card -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl overflow-hidden shadow-sm">
+            <!-- Cover Banner -->
+            <div class="h-28 bg-gradient-to-r from-deep-pine via-teal-blue to-sage-green relative">
+                <div class="absolute -bottom-10 left-8">
+                    <div id="avatar-ring" class="w-20 h-20 rounded-full bg-soft-parchment border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                        <img id="profile-avatar-img" alt="Avatar" class="hidden w-full h-full object-cover"/>
+                        <span id="profile-avatar-initials" class="text-2xl font-bold text-deep-pine">?</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-14 px-8 pb-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 id="profile-name" class="text-2xl font-bold text-deep-pine">Loading...</h3>
+                        <p id="profile-role" class="text-sm text-dusty-rose capitalize mt-1"></p>
+                        <p id="profile-email" class="text-sm text-dusty-rose mt-0.5 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">mail</span> —
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <span id="profile-lib-id" class="inline-block bg-teal-blue/10 text-teal-blue text-xs font-mono font-semibold px-3 py-1 rounded-full"></span>
+                        <p id="profile-joined" class="text-xs text-dusty-rose/70 mt-2"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-msg" class="hidden p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+
+        <!-- Edit Profile Form -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex items-center gap-2">
+                <span class="material-symbols-outlined text-teal-blue">edit</span>
+                <h3 class="font-headline-sm text-deep-pine font-semibold">Edit Profile</h3>
+            </div>
+            <form id="profile-form" class="p-md grid grid-cols-2 gap-md" onsubmit="event.preventDefault(); saveProfile();">
+                <div class="flex flex-col gap-xs col-span-2 md:col-span-1">
+                    <label class="font-label-md text-label-md text-deep-pine" for="edit-name">Full Name</label>
+                    <input id="edit-name" type="text" required class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                </div>
+                <div class="flex flex-col gap-xs col-span-2 md:col-span-1">
+                    <label class="font-label-md text-label-md text-deep-pine" for="edit-library-id">Library ID</label>
+                    <input id="edit-library-id" type="text" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                </div>
+                <div class="flex flex-col gap-xs col-span-2">
+                    <label class="font-label-md text-label-md text-deep-pine" for="edit-avatar">Profile Picture URL</label>
+                    <input id="edit-avatar" type="url" placeholder="https://example.com/photo.jpg" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                    <p class="text-xs text-dusty-rose">Paste a public image URL for your profile photo.</p>
+                </div>
+                <div class="col-span-2 flex justify-end">
+                    <button type="submit" id="btn-save-profile" class="px-6 py-2 bg-deep-pine hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">save</span> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex items-center gap-2">
+                <span class="material-symbols-outlined text-dusty-rose">lock</span>
+                <h3 class="font-headline-sm text-deep-pine font-semibold">Change Password</h3>
+            </div>
+            <form id="pw-form" class="p-md flex flex-col gap-md" onsubmit="event.preventDefault(); changePassword();">
+                <div id="pw-status" class="hidden p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+                <div class="grid grid-cols-2 gap-md">
+                    <div class="flex flex-col gap-xs">
+                        <label class="font-label-md text-label-md text-deep-pine" for="new-pw">New Password</label>
+                        <input id="new-pw" type="password" minlength="6" required placeholder="••••••••" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                    </div>
+                    <div class="flex flex-col gap-xs">
+                        <label class="font-label-md text-label-md text-deep-pine" for="confirm-pw">Confirm Password</label>
+                        <input id="confirm-pw" type="password" minlength="6" required placeholder="••••••••" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" id="btn-change-pw" class="px-6 py-2 bg-dusty-rose hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">lock_reset</span> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Activity Stats -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sage-green">bar_chart</span>
+                <h3 class="font-headline-sm text-deep-pine font-semibold">My Activity</h3>
+            </div>
+            <div id="activity-stats" class="p-md grid grid-cols-3 gap-md">
+                <div class="text-center p-md rounded-xl bg-teal-blue/5 border border-teal-blue/10">
+                    <p id="stat-loans" class="text-3xl font-bold text-teal-blue">—</p>
+                    <p class="text-xs text-dusty-rose mt-1">Active Loans</p>
+                </div>
+                <div class="text-center p-md rounded-xl bg-sage-green/5 border border-sage-green/10">
+                    <p id="stat-reservations" class="text-3xl font-bold text-sage-green">—</p>
+                    <p class="text-xs text-dusty-rose mt-1">Reservations</p>
+                </div>
+                <div class="text-center p-md rounded-xl bg-error/5 border border-error/10">
+                    <p id="stat-overdue" class="text-3xl font-bold text-error">—</p>
+                    <p class="text-xs text-dusty-rose mt-1">Overdue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="bg-white border border-error/30 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-md py-4 border-b border-error/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-error">warning</span>
+                <h3 class="font-headline-sm text-error font-semibold">Danger Zone</h3>
+            </div>
+            <div class="p-md flex items-center justify-between">
+                <div>
+                    <p class="font-label-md text-deep-pine font-semibold">Sign Out</p>
+                    <p class="text-xs text-dusty-rose">Log out of your account on this device.</p>
+                </div>
+                <button onclick="signOut()" class="px-4 py-2 border border-error text-error font-label-lg hover:bg-error/10 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">logout</span> Sign Out
+                </button>
+            </div>
+        </div>
+
+    </div>
+</main>
+</div>
+
+<script>
+let currentUserId = null;
+
+async function init() {
+    await window.initNav();
+    await window.initNotifications();
+    const { data: { session } } = await window.sbClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    
+    currentUserId = session.user.id;
+
+    try {
+        // Fetch profile from DB
+        const { data: profile } = await window.sbClient
+            .from('library_users')
+            .select('*')
+            .eq('id', currentUserId)
+            .single();
+
+        if (profile) {
+            populateProfile(profile, session.user);
+            loadActivityStats(currentUserId);
+        }
+    } catch (err) {
+        console.error(err);
+        // Fallback to session metadata
+        populateProfile(null, session.user);
+    }
+}
+
+function populateProfile(profile, user) {
+    const name = profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const role = profile?.role || user.user_metadata?.role || 'student';
+    const libId = profile?.library_id || user.user_metadata?.library_id || '';
+    const avatarUrl = profile?.profile_picture_url || user.user_metadata?.profile_picture_url || '';
+    const email = user.email || '';
+    const joinedAt = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Update display card
+    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-role').textContent = `${role.charAt(0).toUpperCase() + role.slice(1)} Account`;
+    document.getElementById('profile-email').innerHTML = `<span class="material-symbols-outlined text-[14px]">mail</span> ${email}`;
+    document.getElementById('profile-lib-id').textContent = libId ? `ID: ${libId}` : 'No Library ID';
+    document.getElementById('profile-joined').textContent = `Joined ${joinedAt}`;
+
+    // Avatar
+    const initials = name.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    document.getElementById('profile-avatar-initials').textContent = initials;
+    if (avatarUrl) {
+        const img = document.getElementById('profile-avatar-img');
+        img.src = avatarUrl;
+        img.classList.remove('hidden');
+        document.getElementById('profile-avatar-initials').classList.add('hidden');
+        // Also update header avatar
+        const headerAvatar = document.getElementById('user-avatar');
+        if (headerAvatar) headerAvatar.src = avatarUrl;
+    }
+
+    // Pre-fill form
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-library-id').value = libId;
+    document.getElementById('edit-avatar').value = avatarUrl;
+}
+
+async function saveProfile() {
+    const name = document.getElementById('edit-name').value.trim();
+    const libId = document.getElementById('edit-library-id').value.trim();
+    const avatarUrl = document.getElementById('edit-avatar').value.trim();
+    const btn = document.getElementById('btn-save-profile');
+
+    if (!name) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Saving...';
+    showStatus('', false, true);
+
+    try {
+        // Update library_users table
+        const { error: dbErr } = await window.sbClient
+            .from('library_users')
+            .update({ full_name: name, library_id: libId, profile_picture_url: avatarUrl || null })
+            .eq('id', currentUserId);
+
+        if (dbErr) throw dbErr;
+
+        // Update auth user metadata
+        await window.sbClient.auth.updateUser({
+            data: { full_name: name, library_id: libId, profile_picture_url: avatarUrl || null }
+        });
+
+        // Update UI
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-lib-id').textContent = libId ? `ID: ${libId}` : 'No Library ID';
+        const initials = name.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('profile-avatar-initials').textContent = initials;
+        if (avatarUrl) {
+            document.getElementById('profile-avatar-img').src = avatarUrl;
+            document.getElementById('profile-avatar-img').classList.remove('hidden');
+            document.getElementById('profile-avatar-initials').classList.add('hidden');
+        }
+
+        showStatus('Profile saved successfully!', false);
+    } catch (err) {
+        showStatus('Error: ' + err.message, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">save</span> Save Changes';
+    }
+}
+
+async function changePassword() {
+    const newPw = document.getElementById('new-pw').value;
+    const confirmPw = document.getElementById('confirm-pw').value;
+    const btn = document.getElementById('btn-change-pw');
+    const statusEl = document.getElementById('pw-status');
+
+    if (newPw !== confirmPw) {
+        statusEl.textContent = 'Passwords do not match.';
+        statusEl.className = 'p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
+        statusEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Updating...';
+    statusEl.classList.add('hidden');
+
+    try {
+        const { error } = await window.sbClient.auth.updateUser({ password: newPw });
+        if (error) throw error;
+
+        statusEl.textContent = 'Password updated successfully!';
+        statusEl.className = 'p-sm rounded-lg font-body-sm text-body-sm text-center bg-green-100 text-green-800';
+        statusEl.classList.remove('hidden');
+        document.getElementById('pw-form').reset();
+    } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.className = 'p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
+        statusEl.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">lock_reset</span> Update Password';
+    }
+}
+
+async function loadActivityStats(userId) {
+    try {
+        const [loansRes, reserveRes] = await Promise.all([
+            window.sbClient.from('loans').select('id, due_date', { count: 'exact' }).eq('user_id', userId).eq('status', 'active'),
+            window.sbClient.from('reservations').select('id', { count: 'exact' }).eq('user_id', userId).eq('status', 'pending'),
+        ]);
+
+        const loans = loansRes.data || [];
+        const now = new Date();
+        const overdue = loans.filter(l => l.due_date && new Date(l.due_date) < now).length;
+
+        document.getElementById('stat-loans').textContent = loans.length;
+        document.getElementById('stat-reservations').textContent = reserveRes.data?.length || 0;
+        document.getElementById('stat-overdue').textContent = overdue;
+    } catch (err) {
+        console.warn('Could not load activity stats:', err.message);
+    }
+}
+
+function showStatus(msg, isError, hide = false) {
+    const el = document.getElementById('status-msg');
+    if (hide) { el.classList.add('hidden'); return; }
+    el.textContent = msg;
+    el.className = `p-sm rounded-lg font-body-sm text-body-sm text-center ${isError ? 'bg-error-container text-on-error-container' : 'bg-green-100 text-green-800'}`;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+async function signOut() {
+    await window.sbClient.auth.signOut();
+    window.location.href = 'login.html';
+}
+
+init();
+</script>
+</body></html>

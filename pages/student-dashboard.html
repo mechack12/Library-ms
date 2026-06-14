@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Student Dashboard</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+<!-- SideNavBar -->
+<aside id="app-sidebar"></aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-soft-parchment dark:bg-background border-b border-dusty-rose/20 docked full-width top-0 sticky z-10">
+<div class="flex justify-between items-center px-lg py-sm h-16 w-full">
+<!-- Search Bar (on_left as per JSON, but leaving space for potential brand if needed, though side nav has it) -->
+<div class="flex-1 max-w-xl relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-deep-pine">search</span>
+<input class="w-full bg-surface-container-lowest border border-dusty-rose/20 rounded-full py-2 pl-10 pr-4 text-body-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-teal-blue shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow" placeholder="Search catalog, authors, ISBN..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-md mx-xl">
+<a class="text-deep-pine font-bold border-b-2 border-sage-green pb-1 font-headline-sm text-headline-sm" href="catalog.html">Catalog</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="reservations.html">Reservations</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors relative" href="overdue.html">Overdue
+<span id="overdue-badge" class="hidden absolute -top-1 -right-3 w-2 h-2 bg-error rounded-full"></span>
+</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-sm">
+<button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="bg-sage-green text-white font-label-lg px-4 py-2 rounded-lg hover:opacity-90 transition-opacity ml-2">Action Hub</button>
+<div class="w-10 h-10 rounded-full overflow-hidden ml-4 border border-dusty-rose/20">
+<img id="user-avatar" alt="User Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-xl overflow-y-auto">
+<div class="max-w-container-max mx-auto space-y-xl">
+<!-- Welcome Section -->
+<div>
+<h2 id="welcome-text" class="font-display-lg text-display-lg text-deep-pine">Welcome back.</h2>
+<p class="font-body-lg text-body-lg text-dusty-rose mt-2">Here is your academic reading overview.</p>
+</div>
+<!-- Dynamic Dashboard (Bento Grid) -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<!-- Borrowed Books Visual Summary (Spans 8 cols) -->
+<div id="dashboard-loans" class="md:col-span-8 bg-white border border-dusty-rose/20 rounded-xl p-lg flex flex-col relative overflow-hidden">
+    <p>Loading your loans...</p>
+</div>
+<!-- Overdue Alert (Spans 4 cols) -->
+<div id="overdue-alert" class="md:col-span-4 bg-tertiary-fixed border border-error/20 rounded-xl p-lg flex flex-col justify-center hidden">
+<div class="flex items-center gap-3 mb-4 text-error">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h3 class="font-headline-sm text-headline-sm">Action Required</h3>
+</div>
+<p id="overdue-text" class="font-body-md text-body-md text-on-tertiary-fixed mb-6">You have overdue books.</p>
+<button class="bg-error text-white font-label-lg py-2 rounded-lg hover:opacity-90 transition-opacity w-full">Renew Now</button>
+</div>
+</section>
+<!-- Action Hub Section -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-headline-md text-deep-pine">Action Hub</h3>
+<a class="text-teal-blue font-label-md hover:underline flex items-center gap-1" href="catalog.html">View All <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+<div id="action-hub-cards" class="grid grid-cols-1 md:grid-cols-3 gap-md">
+    <p class="col-span-3 text-center text-dusty-rose py-6">Loading...</p>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+    const coverImages = [
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBooi89eGhDNM0OVPOm4NObIBasYv2koMwthXTXGZ3DrygDatTxIADZnAM5U_33bpvtyQ9w0dCIUWCqO2BSfH0Ix7a_b8P2dVUxKRpCyE3i9jaK5J51wpbLkxYtUSF-GVrw2aaurIGs1c2dZcoBcNPQfQWvCoI1rgnyIoAkR4HYiaGDGKGZHrJ7yB-KD0RZMhZ89YY_4JIRG0idc1FMBw1BHMxwxl2H2nIM8uUj9rrQMgLpc_f53PmzmI8KAth0G09W2aks8htlauc',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuCOCoM37e9q_RQkW0RCR4TaoWjGgQu9Bjj4wlmLKAEa8aWKLgSqCy0zYPq8ROF2OvoBpwA_XeYb6in9sIwIGUzTIm3LpQvUEUBYv9ISrUcC4uo3s9EsinSkRTEvm9Tbb3jpXbho2XL4GJxJBV4H7Whhzw8LLP5BAlNEfp5Ps3EoZkAXJplFog52JCUcXdfKqz8PZ-tPa3MVYspLhvTxf51rtcVA_NeddQnfl39L5Qxn49ipWzcauKUZBMqtZzVx7xsLFE8e-CMdLPA',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuD_u-4ie0KdXR4_-sCzSHfqL9BewE0cnY73LgdM9gFtef2qV6rMf7p7PEhz-HIh6BHB5UlDKnNmzBwg4XEPpKsGIjvmokH0Z6QfRsWtG0hfIpt2lO0zBLLBS1RhrIFomkqM5mE9NTEgt5UhHYH1FCp2D7TRVeu9k9XyVYOYYSNTjAOXdIcAT1ncdD04puZ69m4dqDTk3tX8V0eT_Amf2_h7f-m8pkTi_1Vyy7TDuldZ_ZDOkMlIzejH5rUPgmniozK-929435FaQTM',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBSqOJ-q10QHihXxzCMLB85cYrEt44FhidW6V92uCFDGMbdMvwL1k8zie8e-neEah_mtGA1XirFrRdG5Cgib_RqQaHb4hPmlQd50ABRbi0AF125zjhvbwoIJNTHAHaOccLU86_Q0R38fshvuUUP_XTNLFAKD3SxEuDbxFAycySxeu1C5wcVObLO02V1rLicSojx-NVKTAzZQwTfSjNxxYRCw0s2CVLBkvI0VR-Gph2aTh6wmfr2rV9UVXz6FEou14rsnsYIDP2-XjQ'
+    ];
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+        const existing = document.getElementById('toast-notification');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        const bgColor = type === 'success' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+        const icon = type === 'success' ? 'check_circle' : 'error';
+        toast.className = `fixed bottom-6 right-6 ${bgColor} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md border border-dusty-rose/20`;
+        toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+    }
+
+    async function returnBook(loanId, bookId) {
+        try {
+            // Update loan status
+            const { error: loanError } = await window.sbClient
+                .from('loans')
+                .update({ status: 'returned', return_date: new Date().toISOString() })
+                .eq('id', loanId);
+            if (loanError) throw loanError;
+
+            // Increment available copies
+            const { data: book } = await window.sbClient.from('books').select('available_copies').eq('id', bookId).single();
+            if (book) {
+                await window.sbClient.from('books').update({ available_copies: book.available_copies + 1 }).eq('id', bookId);
+            }
+
+            showToast('Book returned successfully!');
+            loadDashboard();
+        } catch (err) {
+            showToast(err.message || 'Failed to return book.', 'error');
+        }
+    }
+
+    async function loadDashboard() {
+        const { data: { session } } = await window.sbClient.auth.getSession();
+        
+        if (!session) {
+            document.getElementById('welcome-text').innerText = "Welcome, Student.";
+            document.getElementById('dashboard-loans').innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-center py-10">
+                    <span class="material-symbols-outlined text-[48px] text-dusty-rose mb-4">lock</span>
+                    <h3 class="font-headline-md text-deep-pine mb-2">Please Log In</h3>
+                    <p class="font-body-sm text-dusty-rose mb-6">Log in to view your current library loans and reservations.</p>
+                    <button onclick="window.location.href='login.html'" class="bg-sage-green text-white px-6 py-2 rounded-lg font-label-md">Log In Now</button>
+                </div>
+            `;
+            return;
+        }
+
+        // Fetch user profile from DB for real name and avatar
+        let name = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+        let avatarUrl = session.user.user_metadata?.profile_picture_url;
+
+        try {
+            const { data: profile } = await window.sbClient
+                .from('library_users')
+                .select('full_name, profile_picture_url')
+                .eq('id', session.user.id)
+                .single();
+            if (profile) {
+                if (profile.full_name) name = profile.full_name;
+                if (profile.profile_picture_url) avatarUrl = profile.profile_picture_url;
+            }
+        } catch (e) {
+            console.warn('Dashboard profile load failed:', e);
+        }
+
+        // Set welcome
+        document.getElementById('welcome-text').innerText = `Welcome back, ${name}.`;
+
+        // Set avatar
+        if (avatarUrl) {
+            const avatarImg = document.getElementById('user-avatar');
+            if (avatarImg) avatarImg.src = avatarUrl;
+        }
+
+        // Fetch loans
+        const { data: loans, error } = await window.sbClient
+            .from('loans')
+            .select('*, books(id, title)')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active');
+
+        const loanContainer = document.getElementById('dashboard-loans');
+        
+        if (error) {
+            loanContainer.innerHTML = '<p class="text-error">Failed to load loans.</p>';
+            return;
+        }
+
+        const quotaUsed = loans ? loans.length : 0;
+        const limit = 10;
+        const percentage = (quotaUsed / limit) * 100;
+
+        // Check for overdue
+        const overdueLoans = loans ? loans.filter(l => new Date(l.due_date) < new Date()) : [];
+        const overdueAlert = document.getElementById('overdue-alert');
+        if (overdueLoans.length > 0) {
+            overdueAlert.classList.remove('hidden');
+            document.getElementById('overdue-text').textContent = `You have ${overdueLoans.length} overdue book(s). Please return them to avoid penalties.`;
+        }
+
+        loanContainer.innerHTML = `
+            <div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+            <div class="flex justify-between items-start mb-lg relative z-10">
+                <div>
+                    <h3 class="font-headline-md text-headline-md text-deep-pine">Current Loans</h3>
+                    <p class="font-body-sm text-body-sm text-dusty-rose mt-1">${quotaUsed} active loan(s)</p>
+                </div>
+                <span class="bg-soft-parchment text-deep-pine font-label-md px-3 py-1 rounded-full border border-dusty-rose/20">${quotaUsed} / ${limit} Quota Used</span>
+            </div>
+            
+            <div class="relative z-10 mb-6 flex flex-col gap-2">
+                ${loans && loans.length > 0 
+                    ? loans.map(l => {
+                        const isOverdue = new Date(l.due_date) < new Date();
+                        return `<div class="bg-surface-container-low p-3 rounded border ${isOverdue ? 'border-error/30 bg-error-container/20' : 'border-dusty-rose/10'} flex justify-between items-center">
+                            <div>
+                                <span class="font-body-md text-deep-pine">${l.books?.title || 'Unknown'}</span>
+                                <span class="font-label-md ${isOverdue ? 'text-error' : 'text-dusty-rose'} ml-3">Due: ${new Date(l.due_date).toLocaleDateString()}${isOverdue ? ' (OVERDUE)' : ''}</span>
+                            </div>
+                            <button onclick="returnBook('${l.id}', '${l.books?.id}')" class="bg-teal-blue text-white px-3 py-1 rounded font-label-md hover:opacity-90 transition-opacity flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[16px]">undo</span> Return
+                            </button>
+                        </div>`;
+                    }).join('')
+                    : '<p class="font-body-md text-dusty-rose">You have no active loans. Visit the <a href="catalog.html" class="text-teal-blue hover:underline">catalog</a> to borrow books!</p>'}
+            </div>
+
+            <div class="mt-auto relative z-10">
+                <div class="w-full bg-surface-container-low h-3 rounded-full overflow-hidden flex">
+                    <div class="bg-sage-green h-full transition-all duration-500" style="width: ${percentage}%;"></div>
+                    <div class="bg-surface-variant h-full flex-1"></div>
+                </div>
+                <div class="flex justify-between mt-sm text-label-md text-dusty-rose">
+                    <span>0</span>
+                    <span>Library Capacity Limit (${limit})</span>
+                </div>
+            </div>
+        `;
+
+        // Load Action Hub dynamically
+        await loadActionHub(session);
+    }
+
+    async function loadActionHub(session) {
+        const hub = document.getElementById('action-hub-cards');
+
+        // Fetch recent arrivals (3 newest books)
+        const { data: recentBooks } = await window.sbClient
+            .from('books')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(3);
+
+        // Fetch user's active loan count
+        const { count: myLoansCount } = await window.sbClient
+            .from('loans')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', session.user.id)
+            .eq('status', 'active');
+
+        // Fetch total books count
+        const { count: totalBooks } = await window.sbClient
+            .from('books')
+            .select('*', { count: 'exact', head: true });
+
+        hub.innerHTML = '';
+
+        // Card 1: My Active Loans summary
+        hub.innerHTML += `
+            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                    <img alt="My Loans" class="w-full h-full object-cover" src="${coverImages[0]}" />
+                    <span class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-deep-pine font-label-md px-2 py-1 rounded text-xs">${myLoansCount || 0} Active</span>
+                </div>
+                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">My Active Loans</h4>
+                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">You have ${myLoansCount || 0} book(s) currently checked out.</p>
+                <a href="catalog.html" class="w-full border border-teal-blue text-teal-blue font-label-md py-2 rounded-lg hover:bg-teal-blue/5 transition-colors text-center block">Browse Catalog</a>
+            </div>
+        `;
+
+        // Card 2: Recommended (based on total catalog)
+        hub.innerHTML += `
+            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                    <img alt="Library shelf" class="w-full h-full object-cover" src="${coverImages[1]}" />
+                </div>
+                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Explore the Library</h4>
+                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">${totalBooks || 0} titles across all categories are available in the catalog.</p>
+                <a href="catalog.html" class="w-full bg-sage-green text-white font-label-md py-2 rounded-lg hover:bg-opacity-90 transition-opacity text-center block">Explore Catalog</a>
+            </div>
+        `;
+
+        // Card 3: Recent Arrivals (real data)
+        const recentTitle = recentBooks && recentBooks.length > 0 ? recentBooks[0].title : 'New books';
+        const recentCount = recentBooks ? recentBooks.length : 0;
+        hub.innerHTML += `
+            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                    <img alt="New books" class="w-full h-full object-cover" src="${coverImages[2]}" />
+                    <span class="absolute top-2 right-2 bg-sage-green text-white font-label-md px-2 py-1 rounded text-xs">New</span>
+                </div>
+                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Recent Arrivals</h4>
+                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">Latest: "${recentTitle}" and ${recentCount - 1 > 0 ? recentCount - 1 + ' more' : 'others'}.</p>
+                <a href="catalog.html" class="w-full border border-dusty-rose text-dusty-rose font-label-md py-2 rounded-lg hover:bg-dusty-rose/5 transition-colors text-center block">Browse</a>
+            </div>
+        `;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { initNav().then(() => initNotifications()); loadDashboard(); });
+</script>
+</body></html>

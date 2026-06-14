@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Student Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;500;600;700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "teal-blue": "#56A3A6",
+                        "secondary-fixed-dim": "#88d7a3",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e4e2e0",
+                        "surface": "#fbf9f7",
+                        "on-secondary-fixed-variant": "#00522d",
+                        "surface-container-low": "#f5f3f1",
+                        "surface-tint": "#526256",
+                        "surface-bright": "#fbf9f7",
+                        "soft-parchment": "#F1DAC4",
+                        "dusty-rose": "#7C6C77",
+                        "secondary-fixed": "#a4f4bd",
+                        "background": "#fbf9f7",
+                        "inverse-surface": "#30302f",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#a1f1bb",
+                        "primary": "#0d1c13",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c3c8c2",
+                        "surface-dim": "#dbdad8",
+                        "on-tertiary-fixed": "#291617",
+                        "on-secondary-container": "#1f7045",
+                        "tertiary": "#261415",
+                        "primary-fixed": "#d5e7d8",
+                        "primary-fixed-dim": "#b9cbbc",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b9cbbc",
+                        "inverse-on-surface": "#f2f0ee",
+                        "tertiary-fixed-dim": "#e0bfbf",
+                        "outline": "#737873",
+                        "error": "#ba1a1a",
+                        "deep-pine": "#223127",
+                        "on-secondary-fixed": "#00210f",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#88998c",
+                        "tertiary-fixed": "#fddadb",
+                        "on-primary-fixed-variant": "#3b4a3f",
+                        "surface-variant": "#e4e2e0",
+                        "on-background": "#1b1c1b",
+                        "on-surface-variant": "#434843",
+                        "surface-container": "#efedeb",
+                        "on-surface": "#1b1c1b",
+                        "on-tertiary-container": "#ac8e8f",
+                        "on-error": "#ffffff",
+                        "secondary": "#186c41",
+                        "on-primary-fixed": "#101f15",
+                        "tertiary-container": "#3d2829",
+                        "on-tertiary-fixed-variant": "#584142",
+                        "sage-green": "#68B684",
+                        "surface-container-high": "#eae8e6",
+                        "primary-container": "#223127"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "lg": "40px",
+                        "md": "24px",
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Source Sans Three"],
+                        "display-lg": ["Roboto Flex"],
+                        "body-md": ["Source Sans Three"],
+                        "headline-md": ["Roboto Flex"],
+                        "headline-sm": ["Roboto Flex"],
+                        "body-sm": ["Source Sans Three"],
+                        "label-md": ["Roboto Flex"],
+                        "headline-lg": ["Roboto Flex"],
+                        "label-lg": ["Roboto Flex"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+<!-- SideNavBar -->
+<aside class="bg-deep-pine dark:bg-primary-container h-screen w-64 fixed left-0 top-0 shadow-xl flex flex-col p-md z-20">
+<div class="mb-xl">
+<h1 class="font-headline-md text-headline-md font-bold text-soft-parchment">Scholarly Archive</h1>
+<p class="font-body-sm text-body-sm text-sage-green mt-xs">Student Portal</p>
+</div>
+<nav class="flex-1 space-y-sm">
+<a class="bg-sage-green text-primary px-4 py-3 rounded-lg flex items-center gap-3 transition-colors scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-label-md text-label-md">Transactions</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Categories</span>
+</a>
+</nav>
+<div class="mt-auto pt-lg border-t border-on-primary-container/20">
+<button class="w-full bg-sage-green text-white font-label-lg text-label-lg py-sm rounded-lg mb-md flex items-center justify-center gap-2 hover:bg-opacity-90 transition">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+                Borrow / Return
+            </button>
+<nav class="space-y-sm">
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:bg-primary-container hover:text-sage-green" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Logout</span>
+</a>
+</nav>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-soft-parchment dark:bg-background border-b border-dusty-rose/20 sticky top-0 z-10">
+<div class="flex justify-between items-center px-lg py-sm h-16 w-full">
+<div class="flex-1">
+<h2 class="font-headline-sm text-deep-pine">Student Dashboard</h2>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-sm">
+<button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden ml-4 border border-dusty-rose/20">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEXr1W0WZRYYX1_d5VNilUEV8O7w83r37IgZPCgwzMR3Feq_ajHRehOLFjqaTqRN8W6qwmvJQNY7BRZ9JYGUzf8ts1_WiIRvJ69C7nwNw4mXW3_NvqKvpz20wvnIINE4pNc6k9KNkdbvmLb4usdDxQvBQ-lGE9QP8WxLHQbYgzkz0uniuWY0mXlWhliPn5mUyy1i1Xsn0InSuHGRTeOlrCSwsUx1P2dc7J4HIf6Yc3zcZdwNk0KMmLyAQlctWvAVNV4je2RrSUXIQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-xl overflow-y-auto">
+<div class="max-w-container-max mx-auto space-y-xl">
+<!-- Quick Search -->
+<section class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<h3 class="font-headline-md text-deep-pine mb-md">Quick Search</h3>
+<div class="relative max-w-2xl">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-3 pl-12 pr-6 text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-sage-green transition-all" placeholder="Search for books, authors, or topics..." type="text"/>
+</div>
+</section>
+<!-- My Books (Current Loans) -->
+<section>
+<div class="flex justify-between items-end mb-md">
+<div>
+<h3 class="font-headline-md text-deep-pine">My Books</h3>
+<p class="text-body-sm text-dusty-rose">You currently have 3 books on loan.</p>
+</div>
+<span class="text-label-lg bg-primary-fixed px-3 py-1 rounded-full text-on-primary-fixed">4 / 10 Books Used</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="bg-white p-md border border-outline-variant rounded-lg flex gap-md items-center">
+<div class="w-16 h-24 bg-surface-container rounded flex-shrink-0 overflow-hidden">
+<img alt="Book Cover" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20"/>
+</div>
+<div class="flex-1">
+<h4 class="font-label-lg text-deep-pine">Advanced Data Structures</h4>
+<p class="text-body-sm text-dusty-rose mb-2">Due in 2 days</p>
+<button class="text-teal-blue font-label-md hover:underline">Renew Book</button>
+</div>
+<div class="text-error">
+<span class="material-symbols-outlined">notification_important</span>
+</div>
+</div>
+<div class="bg-white p-md border border-outline-variant rounded-lg flex gap-md items-center">
+<div class="w-16 h-24 bg-surface-container rounded flex-shrink-0 overflow-hidden">
+<img alt="Book Cover" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o"/>
+</div>
+<div class="flex-1">
+<h4 class="font-label-lg text-deep-pine">Principles of Physics</h4>
+<p class="text-body-sm text-dusty-rose mb-2">Due in 12 days</p>
+<button class="text-teal-blue font-label-md hover:underline">Renew Book</button>
+</div>
+</div>
+</div>
+</section>
+<!-- New Arrivals -->
+<section>
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-headline-md text-deep-pine">New Arrivals</h3>
+<a class="text-teal-blue font-label-md hover:underline flex items-center gap-1" href="#">Browse Catalog <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-md">
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all relative">
+<img alt="Modern Textbook" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBooi89eGhDNM0OVPOm4NObIBasYv2koMwthXTXGZ3DrygDatTxIADZnAM5U_33bpvtyQ9w0dCIUWCqO2BSfH0Ix7a_b8P2dVUxKRpCyE3i9jaK5J51wpbLkxYtUSF-GVrw2aaurIGs1c2dZcoBcNPQfQWvCoI1rgnyIoAkR4HYiaGDGKGZHrJ7yB-KD0RZMhZ89YY_4JIRG0idc1FMBw1BHMxwxl2H2nIM8uUj9rrQMgLpc_f53PmzmI8KAth0G09W2aks8htlauc"/>
+<div class="absolute top-2 right-2 bg-sage-green text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</div>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">Algorithm Design</h5>
+<p class="text-body-sm text-dusty-rose truncate">J. Doe</p>
+</div>
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all">
+<img alt="Ancient Texts" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20"/>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">History of Science</h5>
+<p class="text-body-sm text-dusty-rose truncate">R. Smith</p>
+</div>
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all">
+<img alt="Classic Literature" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o"/>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">Modern Architecture</h5>
+<p class="text-body-sm text-dusty-rose truncate">K. Wright</p>
+</div>
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all">
+<img alt="Physics Textbook" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBooi89eGhDNM0OVPOm4NObIBasYv2koMwthXTXGZ3DrygDatTxIADZnAM5U_33bpvtyQ9w0dCIUWCqO2BSfH0Ix7a_b8P2dVUxKRpCyE3i9jaK5J51wpbLkxYtUSF-GVrw2aaurIGs1c2dZcoBcNPQfQWvCoI1rgnyIoAkR4HYiaGDGKGZHrJ7yB-KD0RZMhZ89YY_4JIRG0idc1FMBw1BHMxwxl2H2nIM8uUj9rrQMgLpc_f53PmzmI8KAth0G09W2aks8htlauc"/>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">Calculus Made Simple</h5>
+<p class="text-body-sm text-dusty-rose truncate">A. Newton</p>
+</div>
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all">
+<img alt="Biology Textbook" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20"/>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">Organic Chemistry</h5>
+<p class="text-body-sm text-dusty-rose truncate">L. Pasteur</p>
+</div>
+<!-- Book Cover Card -->
+<div class="group cursor-pointer">
+<div class="aspect-[2/3] bg-surface-container rounded-lg overflow-hidden border border-outline-variant group-hover:shadow-md transition-all">
+<img alt="Art Book" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o"/>
+</div>
+<h5 class="mt-2 font-label-md text-deep-pine truncate">The Renaissance</h5>
+<p class="text-body-sm text-dusty-rose truncate">L. Da Vinci</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

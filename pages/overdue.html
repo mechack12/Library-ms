@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Overdue Books - Scholarly Archive</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+
+<!-- SideNavBar -->
+<aside id="app-sidebar"></aside>
+
+<!-- Main Content -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<header class="bg-soft-parchment border-b border-dusty-rose/20 sticky top-0 z-10">
+    <div class="flex justify-between items-center px-lg py-sm h-16">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-error text-[28px]">warning</span>
+            <h2 class="font-headline-md text-deep-pine font-bold">Overdue Books</h2>
+        </div>
+        <div class="flex items-center gap-sm">
+            <button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-dusty-rose/20">
+                <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 p-xl">
+    <div class="max-w-5xl mx-auto">
+        <!-- Summary Cards -->
+        <div id="summary-cards" class="grid grid-cols-1 md:grid-cols-3 gap-md mb-8"></div>
+
+        <!-- Overdue List -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl overflow-hidden shadow-sm">
+            <div class="px-md py-4 border-b border-error/10 bg-error-container/20 flex justify-between items-center">
+                <h3 id="table-title" class="font-headline-sm text-error font-semibold flex items-center gap-2">
+                    <span class="material-symbols-outlined">schedule</span> Overdue List
+                </h3>
+                <span id="overdue-count" class="bg-error text-white font-label-md px-3 py-1 rounded-full text-xs">Loading...</span>
+            </div>
+            <div id="overdue-list" class="divide-y divide-dusty-rose/10">
+                <div class="px-md py-8 text-center text-dusty-rose">Loading overdue records...</div>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<script>
+function showToast(message, type = 'success') {
+    const existing = document.getElementById('toast-notification');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    const bg = type === 'success' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+    toast.className = `fixed bottom-6 right-6 ${bg} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md`;
+    toast.innerHTML = `<span class="material-symbols-outlined">${type === 'success' ? 'check_circle' : 'error'}</span> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+}
+
+async function returnBook(loanId, bookId, currentCopies) {
+    const { error: le } = await window.sbClient.from('loans').update({ status: 'returned', return_date: new Date().toISOString() }).eq('id', loanId);
+    if (le) { showToast('Return failed: ' + le.message, 'error'); return; }
+    await window.sbClient.from('books').update({ available_copies: (currentCopies || 0) + 1 }).eq('id', bookId);
+    showToast('Book returned successfully!');
+    init();
+}
+
+async function init() {
+    const { data: { session } } = await window.sbClient.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const avatarUrl = session.user.user_metadata?.profile_picture_url;
+    if (avatarUrl) document.getElementById('user-avatar').src = avatarUrl;
+
+    const { data: profile } = await window.sbClient.from('library_users').select('role').eq('id', session.user.id).single();
+    const isLibrarian = profile?.role === 'librarian';
+
+    if (isLibrarian) {
+        const portalLabel = document.getElementById('portal-label');
+        if (portalLabel) portalLabel.textContent = 'Librarian Portal';
+        
+        const navStudents = document.getElementById('nav-students');
+        if (navStudents) navStudents.classList.remove('hidden');
+        
+        const navReports = document.getElementById('nav-reports');
+        if (navReports) navReports.classList.remove('hidden');
+        
+        document.getElementById('table-title').innerHTML = '<span class="material-symbols-outlined">schedule</span> All Overdue Loans';
+    }
+
+    const now = new Date().toISOString();
+    let query = window.sbClient.from('loans')
+        .select('*, books(id, title, author, available_copies), library_users(full_name)')
+        .eq('status', 'active')
+        .lt('due_date', now);
+
+    if (!isLibrarian) query = query.eq('user_id', session.user.id);
+    query = query.order('due_date', { ascending: true });
+
+    const { data: loans, error } = await query;
+    const list = document.getElementById('overdue-list');
+
+    if (error) { list.innerHTML = `<div class="px-md py-8 text-center text-error">Error: ${error.message}</div>`; return; }
+
+    document.getElementById('overdue-count').textContent = `${loans.length} Overdue`;
+
+    // Summary cards
+    const totalDaysOverdue = loans.reduce((acc, l) => {
+        const days = Math.floor((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
+        return acc + days;
+    }, 0);
+    document.getElementById('summary-cards').innerHTML = `
+        <div class="bg-error-container/30 border border-error/20 rounded-xl p-md text-center">
+            <p class="font-headline-md text-error font-bold text-3xl">${loans.length}</p>
+            <p class="font-body-sm text-dusty-rose mt-1">Total Overdue Items</p>
+        </div>
+        <div class="bg-white border border-dusty-rose/20 rounded-xl p-md text-center">
+            <p class="font-headline-md text-deep-pine font-bold text-3xl">${totalDaysOverdue}</p>
+            <p class="font-body-sm text-dusty-rose mt-1">Total Days Overdue</p>
+        </div>
+        <div class="bg-white border border-dusty-rose/20 rounded-xl p-md text-center">
+            <p class="font-headline-md text-deep-pine font-bold text-3xl">${loans.length > 0 ? Math.floor(totalDaysOverdue / loans.length) : 0}</p>
+            <p class="font-body-sm text-dusty-rose mt-1">Avg Days Overdue</p>
+        </div>`;
+
+    if (loans.length === 0) {
+        list.innerHTML = `<div class="px-md py-12 text-center">
+            <span class="material-symbols-outlined text-[56px] text-sage-green block mb-3">check_circle</span>
+            <p class="font-headline-sm text-deep-pine font-semibold">No overdue books!</p>
+            <p class="font-body-sm text-dusty-rose mt-2">All books are returned on time.</p>
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = loans.map(l => {
+        const daysOverdue = Math.floor((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
+        const urgency = daysOverdue > 14 ? 'bg-red-100 border-red-300' : daysOverdue > 7 ? 'bg-orange-50 border-orange-200' : 'bg-yellow-50 border-yellow-200';
+        const userInfo = isLibrarian ? `<span class="text-dusty-rose"> · ${l.library_users?.full_name || 'Unknown User'}</span>` : '';
+        return `<div class="px-md py-4 flex items-center justify-between gap-4 ${urgency} border-l-4">
+            <div class="flex-1 min-w-0">
+                <p class="font-body-md text-deep-pine font-semibold">${l.books?.title || 'Unknown'}</p>
+                <p class="font-body-sm text-dusty-rose">${l.books?.author || ''}${userInfo}</p>
+                <p class="font-label-md text-error mt-1">Due: ${new Date(l.due_date).toLocaleDateString()} · <strong>${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue</strong></p>
+            </div>
+            <button onclick="returnBook('${l.id}', '${l.books?.id}', ${l.books?.available_copies || 0})" class="bg-teal-blue text-white px-4 py-2 rounded-lg font-label-md hover:opacity-90 transition flex items-center gap-2 flex-shrink-0">
+                <span class="material-symbols-outlined text-[16px]">undo</span> Return
+            </button>
+        </div>`;
+    }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => { initNav().then(() => initNotifications()); init(); });
+</script>
+</body></html>

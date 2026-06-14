@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Scholarly Archive LMS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "error-container": "#ffdad6",
+                "on-secondary": "#ffffff",
+                "secondary-fixed": "#d8e2ff",
+                "surface-container-lowest": "#ffffff",
+                "surface-bright": "#f7f9ff",
+                "error": "#ba1a1a",
+                "outline": "#777586",
+                "on-secondary-fixed-variant": "#004494",
+                "surface-dim": "#d7dae0",
+                "on-tertiary": "#ffffff",
+                "background": "#f7f9ff",
+                "on-background": "#181c20",
+                "on-primary-fixed": "#09006b",
+                "on-primary-fixed-variant": "#312ebc",
+                "on-tertiary-container": "#40b25c",
+                "surface-container-high": "#e5e8ee",
+                "on-surface-variant": "#464554",
+                "tertiary": "#00260a",
+                "inverse-surface": "#2d3135",
+                "on-secondary-container": "#00285c",
+                "on-tertiary-fixed-variant": "#005320",
+                "on-primary": "#ffffff",
+                "inverse-primary": "#c1c1ff",
+                "surface": "#f7f9ff",
+                "on-error-container": "#93000a",
+                "primary": "#0b0076",
+                "primary-fixed-dim": "#c1c1ff",
+                "primary-container": "#1a0dab",
+                "on-error": "#ffffff",
+                "inverse-on-surface": "#eef1f7",
+                "surface-tint": "#4b4bd4",
+                "on-primary-container": "#9091ff",
+                "surface-container": "#ebeef4",
+                "tertiary-fixed": "#89fa9b",
+                "secondary-container": "#4d8efe",
+                "secondary": "#005ac1",
+                "outline-variant": "#c7c4d7",
+                "on-surface": "#181c20",
+                "tertiary-container": "#003e16",
+                "on-tertiary-fixed": "#002108",
+                "surface-variant": "#dfe3e9",
+                "surface-container-highest": "#dfe3e9",
+                "surface-container-low": "#f1f4fa",
+                "tertiary-fixed-dim": "#6ddd81",
+                "secondary-fixed-dim": "#adc6ff",
+                "primary-fixed": "#e1dfff",
+                "on-secondary-fixed": "#001a41"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "unit": "4px",
+                "margin-mobile": "16px",
+                "container-max-width": "1280px",
+                "gutter": "24px",
+                "margin-desktop": "60px",
+                "stack-spacing-md": "16px",
+                "stack-spacing-sm": "8px",
+                "stack-spacing-lg": "32px"
+        },
+        "fontFamily": {
+                "headline-md": [
+                        "Roboto Flex"
+                ],
+                "headline-lg": [
+                        "Roboto Flex"
+                ],
+                "body-sm": [
+                        "Source Sans 3"
+                ],
+                "link-title": [
+                        "Roboto Flex"
+                ],
+                "label-md": [
+                        "Source Sans 3"
+                ],
+                "body-lg": [
+                        "Source Sans 3"
+                ],
+                "body-md": [
+                        "Source Sans 3"
+                ]
+        },
+        "fontSize": {
+                "headline-md": [
+                        "20px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-sm": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "link-title": [
+                        "20px",
+                        {
+                                "lineHeight": "26px",
+                                "letterSpacing": "0.2px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "22px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-6">
+<div class="w-full max-w-4xl flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl border border-outline-variant bg-surface-container-lowest">
+<!-- Left Panel: Branding & Imagery -->
+<div class="hidden md:flex flex-col md:w-1/2 bg-primary text-on-primary p-16 relative overflow-hidden">
+<img alt="Library Interior" class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay" data-alt="A grand, traditional university library hall featuring soaring arches, warm wooden bookshelves reaching the ceiling, and soft ambient light filtering through tall windows, casting a serene, scholarly atmosphere. The image perfectly embodies the 'Scholarly Archive' aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANSi7OpCYBEh2boA1RCnePlhYDu2YX--jIw6ubvRue8fAbcd1SLcTButgwcI_pDV6dGKHDY-3pemDCgmKdcfbqaZ9zyDVuA-wobfOydMVvthHB1Ka9PoUu8LjdxRr4i9LiXdX-Tr2nTO5nkqnJA0j2gFVfezU9xfwKzuXaVuQh3__0tThNCvQTP0JQrCfioITUxWh3BkYekmsjq8R_j3SL9KgZUaoUHb6JOkmkhBAqlObWpNrSfeXt7sDym04tuWzGJ_5pmin_bZk"/>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<span class="material-symbols-outlined text-[48px] mb-6" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-primary mb-3">Scholarly Archive</h1>
+<p class="font-body-lg text-body-lg text-primary-fixed-dim">A unified Library Management System designed for focus, reliability, and tactile efficiency.</p>
+</div>
+<div class="bg-primary-container/80 backdrop-blur-sm p-6 rounded-lg border border-on-primary-container/30">
+<p class="font-body-sm text-body-sm italic text-on-primary-container">"Organizing the world's academic knowledge, one shelf at a time."</p>
+</div>
+</div>
+</div>
+<!-- Right Panel: Login/Signup Interface -->
+<div class="w-full md:w-1/2 p-10 md:p-16 flex flex-col bg-surface-container-lowest">
+<div class="mb-6 text-center md:text-left">
+<h2 id="form-title" class="font-headline-lg text-headline-lg font-semibold text-on-surface mb-1">Welcome Back</h2>
+<p id="form-subtitle" class="font-body-md text-body-md text-on-surface-variant">Please log in to continue to your account.</p>
+</div>
+
+<!-- Auth Mode Toggle -->
+<div class="flex p-1 bg-surface-container rounded-lg mb-6 border border-outline-variant">
+<button id="tab-login" onclick="switchMode('login')" class="flex-1 py-3 px-4 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]">login</span> Log In
+</button>
+<button id="tab-signup" onclick="switchMode('signup')" class="flex-1 py-3 px-4 rounded-md text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">person_add</span> Sign Up
+</button>
+</div>
+
+<!-- Role Toggle -->
+<div class="flex p-1 bg-surface-container rounded-lg mb-6 border border-outline-variant">
+<button id="role-student" onclick="switchRole('student')" class="flex-1 py-3 px-4 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]">school</span> Student
+</button>
+<button id="role-librarian" onclick="switchRole('librarian')" class="flex-1 py-3 px-4 rounded-md text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">badge</span> Librarian
+</button>
+</div>
+
+<!-- Status Message -->
+<div id="status-msg" class="hidden mb-6 p-3 rounded-lg font-body-sm text-body-sm text-center"></div>
+
+<!-- Auth Form -->
+<form id="auth-form" class="flex flex-col gap-6 flex-grow">
+<!-- Full Name (Sign Up only) -->
+<div id="name-field" class="flex flex-col gap-1 hidden">
+<label class="font-label-md text-label-md text-on-surface" for="fullName">Full Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">badge</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-shadow" id="fullName" placeholder="e.g. John Doe" type="text"/>
+</div>
+</div>
+
+<!-- Email -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="userId">Email Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">mail</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-shadow" id="userId" placeholder="your.email@scholarly.edu" type="email" required/>
+</div>
+</div>
+
+<!-- Password -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface" for="password">Password</label>
+<a id="forgot-link" class="font-label-md text-label-md text-primary hover:underline" href="#">Forgot password?</a>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="w-full pl-10 pr-10 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-shadow" id="password" placeholder="••••••••" type="password" required minlength="6"/>
+<button id="toggle-pw" class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+</div>
+</div>
+
+<!-- Confirm Password (Sign Up only) -->
+<div id="confirm-pw-field" class="flex flex-col gap-1 hidden">
+<label class="font-label-md text-label-md text-on-surface" for="confirmPassword">Confirm Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="w-full pl-10 pr-4 py-3 rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-shadow" id="confirmPassword" placeholder="••••••••" type="password"/>
+</div>
+</div>
+
+<!-- Submit -->
+<button id="submit-btn" class="mt-6 w-full py-3 px-6 bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container font-label-md text-label-md rounded-lg shadow-md transition-colors flex items-center justify-center gap-2" type="submit">
+Log In <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</form>
+
+<div class="mt-10 pt-6 border-t border-outline-variant text-center">
+<p id="switch-prompt" class="font-body-sm text-body-sm text-on-surface-variant">
+Don't have an account? <a class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors cursor-pointer" onclick="switchMode('signup')">Create one now</a>
+</p>
+</div>
+</div>
+</div>
+
+<script>
+    let currentMode = 'login';
+    let currentRole = 'student';
+
+    function switchMode(mode) {
+        currentMode = mode;
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
+        const nameField = document.getElementById('name-field');
+        const confirmField = document.getElementById('confirm-pw-field');
+        const forgotLink = document.getElementById('forgot-link');
+        const submitBtn = document.getElementById('submit-btn');
+        const formTitle = document.getElementById('form-title');
+        const formSubtitle = document.getElementById('form-subtitle');
+        const switchPrompt = document.getElementById('switch-prompt');
+        hideStatus();
+
+        const activeTab = 'flex-1 py-3 px-4 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm flex items-center justify-center gap-2 transition-all';
+        const inactiveTab = 'flex-1 py-3 px-4 rounded-md text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-2';
+
+        if (mode === 'signup') {
+            tabSignup.className = activeTab;
+            tabLogin.className = inactiveTab;
+            nameField.classList.remove('hidden');
+            confirmField.classList.remove('hidden');
+            forgotLink.classList.add('hidden');
+            submitBtn.innerHTML = 'Create Account <span class="material-symbols-outlined text-[20px]">person_add</span>';
+            formTitle.textContent = 'Create Account';
+            formSubtitle.textContent = 'Register as a new library member.';
+            switchPrompt.innerHTML = 'Already have an account? <a class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors cursor-pointer" onclick="switchMode(\'login\')">Log in here</a>';
+        } else {
+            tabLogin.className = activeTab;
+            tabSignup.className = inactiveTab;
+            nameField.classList.add('hidden');
+            confirmField.classList.add('hidden');
+            forgotLink.classList.remove('hidden');
+            submitBtn.innerHTML = 'Log In <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
+            formTitle.textContent = 'Welcome Back';
+            formSubtitle.textContent = 'Please log in to continue to your account.';
+            switchPrompt.innerHTML = 'Don\'t have an account? <a class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors cursor-pointer" onclick="switchMode(\'signup\')">Create one now</a>';
+        }
+    }
+
+    function switchRole(role) {
+        currentRole = role;
+        const btnStudent = document.getElementById('role-student');
+        const btnLibrarian = document.getElementById('role-librarian');
+        const active = 'flex-1 py-3 px-4 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm flex items-center justify-center gap-2 transition-all';
+        const inactive = 'flex-1 py-3 px-4 rounded-md text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-2';
+        btnStudent.className = role === 'student' ? active : inactive;
+        btnLibrarian.className = role === 'librarian' ? active : inactive;
+    }
+
+    function showStatus(msg, isError) {
+        const el = document.getElementById('status-msg');
+        el.textContent = msg;
+        el.className = `mb-6 p-3 rounded-lg font-body-sm text-body-sm text-center ${isError ? 'bg-error-container text-on-error-container' : 'bg-tertiary-fixed text-on-tertiary-fixed'}`;
+    }
+    function hideStatus() {
+        document.getElementById('status-msg').className = 'hidden mb-6 p-3 rounded-lg font-body-sm text-body-sm text-center';
+    }
+
+    document.getElementById('toggle-pw').addEventListener('click', function() {
+        const pw = document.getElementById('password');
+        const icon = this.querySelector('span');
+        pw.type = pw.type === 'password' ? 'text' : 'password';
+        icon.textContent = pw.type === 'password' ? 'visibility_off' : 'visibility';
+    });
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('userId').value.trim();
+        const password = document.getElementById('password').value;
+        const submitBtn = document.getElementById('submit-btn');
+        const originalHTML = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Please wait...';
+        submitBtn.disabled = true;
+
+        try {
+            if (currentMode === 'signup') {
+                const fullName = document.getElementById('fullName').value.trim();
+                const confirmPw = document.getElementById('confirmPassword').value;
+                if (!fullName) { showStatus('Please enter your full name.', true); return; }
+                if (password !== confirmPw) { showStatus('Passwords do not match.', true); return; }
+                if (password.length < 6) { showStatus('Password must be at least 6 characters.', true); return; }
+
+                const { data, error } = await supabase.auth.signUp({
+                    email, password,
+                    options: { data: { full_name: fullName, role: currentRole, library_id: email.split('@')[0] } }
+                });
+                if (error) throw error;
+                showStatus('Account created successfully! You can now log in.', false);
+                setTimeout(() => switchMode('login'), 1500);
+            } else {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                showStatus('Login successful! Redirecting...', false);
+                setTimeout(() => {
+                    window.location.href = currentRole === 'librarian' ? '../librarian_portal_1/code.html' : '../student_dashboard_1/code.html';
+                }, 800);
+            }
+        } catch (err) {
+            showStatus(err.message || 'An error occurred. Please try again.', true);
+        } finally {
+            submitBtn.innerHTML = originalHTML;
+            submitBtn.disabled = false;
+        }
+    });
+
+    (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            showStatus('You are already logged in. Redirecting...', false);
+            setTimeout(() => { window.location.href = '../student_dashboard_1/code.html'; }, 800);
+        }
+    })();
+</script>
+</body></html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Book Catalog</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Source+Sans+3:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<script src="../js/catalog.js"></script>
+    <script>
+      // Ensure Supabase client is available before any logic runs
+      if (!window.supabase) {
+        console.error('Supabase client not initialized – check supabase-config.js');
+        alert('Supabase initialization failed. Please reload the page.');
+      }
+    </script>
+
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
+<!-- Shared Component: SideNavBar -->
+<aside id="app-sidebar"></aside>
+<!-- Shared Component: TopAppBar -->
+<header class="docked full-width top-0 border-b border-outline-variant bg-surface flex justify-between items-center px-10 py-3 ml-64 w-[calc(100%-16rem)] fixed z-40 h-[72px]">
+<!-- Left: Search (Persistent fixture per guidelines) -->
+<div class="flex-1 max-w-md">
+<div class="relative flex items-center w-full h-10 rounded-lg border border-outline bg-surface-container-lowest overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="grid place-items-center h-full w-12 text-on-surface-variant">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="peer h-full w-full outline-none text-body-sm text-on-surface bg-transparent pr-2 placeholder-on-surface-variant/70" id="global-search" placeholder="Search catalog, authors, or ISBN..." type="text"/>
+</div>
+</div>
+<!-- Middle: Navigation Links (Catalog is Active) -->
+<nav class="flex items-center gap-6 mx-6">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-headline-md text-headline-md transition-colors" href="#">Catalog</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors" href="#">Reservations</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors relative" href="#">
+                Overdue
+                <span class="absolute -top-1 -right-2 w-2 h-2 bg-error rounded-full"></span>
+</a>
+</nav>
+<!-- Right: Actions -->
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full border border-surface"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-1"></div>
+<button class="bg-primary text-on-primary font-label-md py-1.5 px-3 rounded-lg flex items-center gap-1 hover:bg-primary/90 transition-colors">
+                Action Hub
+            </button>
+<div class="w-9 h-9 rounded-full overflow-hidden border border-outline-variant ml-2">
+    <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-[72px] p-10 flex gap-6 max-w-container-max mx-auto min-h-[calc(100vh-72px)]">
+<!-- Advanced Filter Sidebar (Tactile, Structured) -->
+<aside class="w-72 flex-shrink-0 flex flex-col gap-6">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
+<div class="flex items-center justify-between mb-3 border-b border-outline-variant pb-3">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+                        Filters
+                    </h2>
+<button class="text-on-surface-variant font-label-md hover:text-primary" id="reset-filters-btn">Reset</button>
+</div>
+<!-- Filter Group: Availability -->
+<div class="mb-6">
+<h3 class="font-label-md text-on-surface-variant mb-1">Availability</h3>
+<div class="flex flex-col gap-1 mt-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-radio text-primary border-outline focus:ring-primary" name="availability" value="all" type="radio"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">All Books</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-primary border-outline focus:ring-primary" name="availability" value="available" type="radio"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Available Now</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-primary border-outline focus:ring-primary" name="availability" value="borrowed" type="radio"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Currently Borrowed</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Genre -->
+<div class="mb-6">
+<h3 class="font-label-md text-on-surface-variant mb-1">Genre</h3>
+<div class="relative mb-2">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-[18px] text-on-surface-variant">search</span>
+<input id="genre-search" class="w-full pl-8 pr-2 py-1 bg-surface-container-lowest border border-outline rounded font-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Find genre..." type="text"/>
+</div>
+<div id="genre-list" class="flex flex-col gap-1 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline rounded-sm focus:ring-primary genre-checkbox" value="Computer Science" type="checkbox"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Computer Science</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline rounded-sm focus:ring-primary genre-checkbox" value="Historical Fiction" type="checkbox"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Historical Fiction</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline rounded-sm focus:ring-primary genre-checkbox" value="Philosophy" type="checkbox"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Philosophy</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline rounded-sm focus:ring-primary genre-checkbox" value="Data Structures" type="checkbox"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Data Structures</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-primary border-outline rounded-sm focus:ring-primary genre-checkbox" value="Architecture" type="checkbox"/>
+<span class="font-body-sm text-on-surface group-hover:text-primary">Architecture</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Author -->
+<div class="mb-6">
+<h3 class="font-label-md text-on-surface-variant mb-1">Author</h3>
+<input id="filter-author" class="w-full px-3 py-1.5 bg-surface-container-lowest border border-outline rounded font-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Knuth, D." type="text"/>
+</div>
+<!-- Filter Group: ISBN -->
+<div>
+<h3 class="font-label-md text-on-surface-variant mb-1">Exact ISBN</h3>
+<input id="filter-isbn" class="w-full px-3 py-1.5 bg-surface-container-lowest border border-outline rounded font-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono text-[13px]" placeholder="XXX-X-XXXX-XXXX-X" type="text"/>
+</div>
+</div>
+<button id="apply-filters-btn" class="w-full border border-primary text-primary font-label-md py-2 rounded-lg hover:bg-primary/5 transition-colors">
+                Apply Advanced Filters
+            </button>
+</aside>
+<!-- Book Grid Area -->
+<div class="flex-1 flex flex-col">
+<!-- Grid Header -->
+<div class="flex justify-between items-end mb-6">
+<div>
+<h2 class="font-headline-lg text-on-surface font-bold">Catalog Results</h2>
+<p id="catalog-count-text" class="font-body-sm text-on-surface-variant mt-1">Showing 0 scholarly works</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-md text-on-surface-variant">Sort by:</span>
+<select id="sort-select" class="bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 font-body-sm text-on-surface outline-none focus:border-primary">
+<option value="created_at">Date Added (Newest)</option>
+<option value="title">Title (A-Z)</option>
+<option value="author">Author (A-Z)</option>
+</select>
+</div>
+</div>
+<!-- Bento-style Grid -->
+<div id="book-catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+    <!-- Books will be loaded here dynamically -->
+</div>
+<!-- Pagination -->
+<div class="mt-auto flex justify-center items-center gap-2 border-t border-outline-variant pt-6">
+<button class="w-8 h-8 flex items-center justify-center rounded text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-md shadow-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+<script>
+    // High-quality book cover images from the archive
+    const bookCoverImages = [
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuCOCoM37e9q_RQkW0RCR4TaoWjGgQu9Bjj4wlmLKAEa8aWKLgSqCy0zYPq8ROF2OvoBpwA_XeYb6in9sIwIGUzTIm3LpQvUEUBYv9ISrUcC4uo3s9EsinSkRTEvm9Tbb3jpXbho2XL4GJxJBV4H7Whhzw8LLP5BAlNEfp5Ps3EoZkAXJplFog52JCUcXdfKqz8PZ-tPa3MVYspLhvTxf51rtcVA_NeddQnfl39L5Qxn49ipWzcauKUZBMqtZzVx7xsLFE8e-CMdLPA',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuD_u-4ie0KdXR4_-sCzSHfqL9BewE0cnY73LgdM9gFtef2qV6rMf7p7PEhz-HIh6BHB5UlDKnNmzBwg4XEPpKsGIjvmokH0Z6QfRsWtG0hfIpt2lO0zBLLBS1RhrIFomkqM5mE9NTEgt5UhHYH1FCp2D7TRVeu9k9XyVYOYYSNTjAOXdIcAT1ncdD04puZ69m4dqDTk3tX8V0eT_Amf2_h7f-m8pkTi_1Vyy7TDuldZ_ZDOkMlIzejH5rUPgmniozK-929435FaQTM',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBSqOJ-q10QHihXxzCMLB85cYrEt44FhidW6V92uCFDGMbdMvwL1k8zie8e-neEah_mtGA1XirFrRdG5Cgib_RqQaHb4hPmlQd50ABRbi0AF125zjhvbwoIJNTHAHaOccLU86_Q0R38fshvuUUP_XTNLFAKD3SxEuDbxFAycySxeu1C5wcVObLO02V1rLicSojx-NVKTAzZQwTfSjNxxYRCw0s2CVLBkvI0VR-Gph2aTh6wmfr2rV9UVXz6FEou14rsnsYIDP2-XjQ',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o',
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBooi89eGhDNM0OVPOm4NObIBasYv2koMwthXTXGZ3DrygDatTxIADZnAM5U_33bpvtyQ9w0dCIUWCqO2BSfH0Ix7a_b8P2dVUxKRpCyE3i9jaK5J51wpbLkxYtUSF-GVrw2aaurIGs1c2dZcoBcNPQfQWvCoI1rgnyIoAkR4HYiaGDGKGZHrJ7yB-KD0RZMhZ89YY_4JIRG0idc1FMBw1BHMxwxl2H2nIM8uUj9rrQMgLpc_f53PmzmI8KAth0G09W2aks8htlauc'
+    ];
+
+    // Toast notification system
+    function showToast(message, type = 'success') {
+        const existing = document.getElementById('toast-notification');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        const bgColor = type === 'success' ? 'bg-tertiary-container text-on-tertiary-fixed' : 'bg-error-container text-on-error-container';
+        const icon = type === 'success' ? 'check_circle' : 'error';
+        toast.className = `fixed bottom-6 right-6 ${bgColor} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md animate-slide-up border border-outline-variant`;
+        toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+    }
+
+    async function loadBooks() {
+        const grid = document.getElementById('book-catalog-grid');
+        grid.innerHTML = '<p class="col-span-3 text-center py-10 font-body-md text-on-surface-variant">Loading catalog...</p>';
+
+        // Get filter values
+        const searchQuery = document.getElementById('global-search').value.toLowerCase();
+        const availability = document.querySelector('input[name="availability"]:checked').value;
+        const authorFilter = document.getElementById('filter-author').value;
+        const isbnFilter = document.getElementById('filter-isbn').value;
+        const sortOption = document.getElementById('sort-select').value;
+        
+        // Get checked genres
+        const checkedGenres = Array.from(document.querySelectorAll('.genre-checkbox:checked')).map(cb => cb.value);
+
+        // Build Supabase Query
+        let query = window.sbClient.from('books').select('*');
+
+        if (availability === 'available') {
+            query = query.gt('available_copies', 0);
+        } else if (availability === 'borrowed') {
+            query = query.eq('available_copies', 0);
+        }
+
+        if (checkedGenres.length > 0) {
+            query = query.in('category', checkedGenres);
+        }
+
+        if (authorFilter) {
+            query = query.ilike('author', `%${authorFilter}%`);
+        }
+
+        if (isbnFilter) {
+            query = query.eq('isbn', isbnFilter);
+        }
+
+        // Apply sorting
+        if (sortOption === 'title') {
+            query = query.order('title', { ascending: true });
+        } else if (sortOption === 'author') {
+            query = query.order('author', { ascending: true });
+        } else {
+            // default to newest
+            query = query.order('created_at', { ascending: false });
+        }
+
+        const { data: books, error } = await query;
+
+        if (error) {
+            console.error('Error fetching books:', error);
+            grid.innerHTML = '<p class="col-span-3 text-center py-10 font-body-md text-error">Failed to load catalog.</p>';
+            return;
+        }
+
+        // Client-side text search (since global search acts on multiple columns)
+        let filteredBooks = books;
+        if (searchQuery) {
+            filteredBooks = books.filter(b => 
+                b.title.toLowerCase().includes(searchQuery) || 
+                b.author.toLowerCase().includes(searchQuery) ||
+                b.isbn.toLowerCase().includes(searchQuery)
+            );
+        }
+
+        // Update count text
+        const countEl = document.getElementById('catalog-count-text');
+        if (countEl) countEl.textContent = `Showing ${filteredBooks.length} scholarly works`;
+
+        grid.innerHTML = '';
+        
+        if (filteredBooks.length === 0) {
+            grid.innerHTML = '<p class="col-span-3 text-center py-10 font-body-md text-on-surface-variant">No books match your filters.</p>';
+            return;
+        }
+
+        filteredBooks.forEach((book, index) => {
+            const isAvailable = book.available_copies > 0;
+            const coverImg = bookCoverImages[index % bookCoverImages.length];
+
+            const statusBadge = isAvailable 
+                ? `<div class="absolute top-2 right-2 bg-surface/90 backdrop-blur border border-outline-variant text-primary font-label-md px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Available (${book.available_copies})</div>`
+                : `<div class="absolute top-2 right-2 bg-surface/90 backdrop-blur border border-outline-variant text-on-surface-variant font-label-md px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span> Borrowed</div>`;
+            
+            const actionButton = isAvailable
+                ? `<button class="borrow-btn w-full bg-primary text-on-primary font-label-md py-2 rounded flex justify-center items-center gap-2 hover:bg-primary/90 transition-colors" data-book-id="${book.id}"><span class="material-symbols-outlined text-[18px]">bookmark_add</span> Borrow</button>`
+                : `<button class="reserve-btn w-full bg-surface-container border border-primary text-primary font-label-md py-2 rounded flex justify-center items-center gap-2 hover:bg-primary/5 transition-colors" data-book-id="${book.id}"><span class="material-symbols-outlined text-[18px]">bookmark</span> Reserve</button>`;
+
+            const card = document.createElement('div');
+            card.className = `bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col group hover:shadow-md transition-all duration-300 ${!isAvailable ? 'opacity-75' : ''}`;
+            card.innerHTML = `
+                <div class="h-48 bg-surface-container-lowest relative overflow-hidden border-b border-outline-variant">
+                    <img alt="${book.title}" src="${coverImg}" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />
+                    ${statusBadge}
+                </div>
+                <div class="p-4 flex-1 flex flex-col">
+                    <div class="font-label-md text-secondary mb-1 uppercase tracking-wider">${book.category || 'Uncategorized'}</div>
+                    <h3 class="font-headline-md text-on-surface leading-tight mb-1">${book.title}</h3>
+                    <p class="font-body-sm text-on-surface-variant mb-1">${book.author}</p>
+                    <p class="font-mono text-[11px] text-on-surface-variant/70 mb-4 mt-auto pt-2 border-t border-outline-variant">ISBN: ${book.isbn}</p>
+                    ${actionButton}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        // Attach borrow AND reserve handlers via event delegation
+        grid.addEventListener('click', async (e) => {
+            const borrowBtn = e.target.closest('.borrow-btn');
+            if (borrowBtn) {
+                const bookId = borrowBtn.dataset.bookId;
+                borrowBtn.disabled = true;
+                borrowBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Borrowing...';
+                await borrowBook(bookId);
+                return;
+            }
+            const reserveBtn = e.target.closest('.reserve-btn');
+            if (reserveBtn) {
+                const bookId = reserveBtn.dataset.bookId;
+                reserveBtn.disabled = true;
+                reserveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Reserving...';
+                await reserveBook(bookId);
+            }
+        });
+    }
+
+    async function reserveBook(bookId) {
+        try {
+            const { data: { session } } = await window.sbClient.auth.getSession();
+            if (!session) { showToast('Please log in first.', 'error'); window.location.href = 'login.html'; return; }
+
+            // Check for existing reservation
+            const { data: existing } = await window.sbClient.from('reservations').select('id').eq('user_id', session.user.id).eq('book_id', bookId).eq('status', 'pending').maybeSingle();
+            if (existing) { showToast('You already reserved this book!', 'error'); loadBooks(); return; }
+
+            const { error } = await window.sbClient.from('reservations').insert({ user_id: session.user.id, book_id: bookId, status: 'pending' });
+            if (error) throw error;
+
+            showToast('Book reserved! You\'ll be notified when it\'s available. <a href="reservations.html" style="text-decoration:underline">View reservations</a>', 'success');
+            loadBooks();
+        } catch (err) {
+            showToast(err.message || 'Failed to reserve book.', 'error');
+            loadBooks();
+        }
+    }
+
+    async function borrowBook(bookId) {
+        try {
+            const { data: { session } } = await window.sbClient.auth.getSession();
+            if (!session) {
+                showToast('Please log in to borrow books.', 'error');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check if user already has this book borrowed
+            const { data: existingLoan } = await window.sbClient
+                .from('loans')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .eq('book_id', bookId)
+                .eq('status', 'active')
+                .maybeSingle();
+
+            if (existingLoan) {
+                showToast('You already have this book borrowed!', 'error');
+                loadBooks();
+                return;
+            }
+
+            // Check max loans (limit 10)
+            const { count: activeLoans } = await window.sbClient
+                .from('loans')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', session.user.id)
+                .eq('status', 'active');
+
+            if (activeLoans >= 10) {
+                showToast('You have reached the maximum of 10 active loans.', 'error');
+                loadBooks();
+                return;
+            }
+
+            // Get current book data
+            const { data: book } = await window.sbClient
+                .from('books')
+                .select('available_copies')
+                .eq('id', bookId)
+                .single();
+
+            if (!book || book.available_copies <= 0) {
+                showToast('This book is no longer available.', 'error');
+                loadBooks();
+                return;
+            }
+
+            // Set due date to 14 days from now
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+
+            // Insert loan record
+            const { error: loanError } = await window.sbClient
+                .from('loans')
+                .insert({
+                    book_id: bookId,
+                    user_id: session.user.id,
+                    due_date: dueDate.toISOString(),
+                    status: 'active'
+                });
+
+            if (loanError) throw loanError;
+
+            // Decrement available copies
+            const { error: updateError } = await window.sbClient
+                .from('books')
+                .update({ available_copies: book.available_copies - 1 })
+                .eq('id', bookId);
+
+            if (updateError) throw updateError;
+
+            showToast(`Book borrowed successfully! Due: ${dueDate.toLocaleDateString()}`, 'success');
+            loadBooks(); // Refresh catalog
+
+        } catch (err) {
+            console.error('Borrow error:', err);
+            showToast(err.message || 'Failed to borrow book. Please try again.', 'error');
+            loadBooks();
+        }
+    }
+
+    async function checkAuthAndLoad() {
+        const { data: { session } } = await window.sbClient.auth.getSession();
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const role = session.user.user_metadata?.role || 'student';
+        // Update dashboard link according to role
+        const dashboardLink = document.getElementById('nav-dashboard');
+        if (dashboardLink) {
+            dashboardLink.href = role === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
+        }
+        
+        // Highlight Inventory as active (already styled via classes above)
+        loadBooks();
+    }
+
+    // Load data when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        initNav().then(() => initNotifications());
+        checkAuthAndLoad();
+
+        // Filter event listeners
+        document.getElementById('apply-filters-btn').addEventListener('click', loadBooks);
+
+        document.getElementById('reset-filters-btn').addEventListener('click', () => {
+            document.getElementById('global-search').value = '';
+            document.querySelector('input[name="availability"][value="all"]').checked = true;
+            document.getElementById('filter-author').value = '';
+            document.getElementById('filter-isbn').value = '';
+            document.getElementById('genre-search').value = '';
+            document.querySelectorAll('.genre-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('sort-select').value = 'created_at';
+            loadBooks();
+        });
+
+        document.getElementById('sort-select').addEventListener('change', loadBooks);
+
+        // Global search with debounce
+        let searchTimeout;
+        document.getElementById('global-search').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadBooks, 400);
+        });
+
+        // Genre search filter (UI only)
+        document.getElementById('genre-search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const labels = document.getElementById('genre-list').querySelectorAll('label');
+            labels.forEach(label => {
+                const text = label.textContent.toLowerCase();
+                label.style.display = text.includes(term) ? 'flex' : 'none';
+            });
+        });
+    });
+</script>
+</body></html>

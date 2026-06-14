@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>School Librarian Portal - Daily Tasks</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "teal-blue": "#56A3A6",
+                        "secondary-fixed-dim": "#88d7a3",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e4e2e0",
+                        "surface": "#fbf9f7",
+                        "on-secondary-fixed-variant": "#00522d",
+                        "surface-container-low": "#f5f3f1",
+                        "surface-tint": "#526256",
+                        "surface-bright": "#fbf9f7",
+                        "soft-parchment": "#F1DAC4",
+                        "dusty-rose": "#7C6C77",
+                        "secondary-fixed": "#a4f4bd",
+                        "background": "#fbf9f7",
+                        "inverse-surface": "#30302f",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#a1f1bb",
+                        "primary": "#0d1c13",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c3c8c2",
+                        "surface-dim": "#dbdad8",
+                        "on-tertiary-fixed": "#291617",
+                        "on-secondary-container": "#1f7045",
+                        "tertiary": "#261415",
+                        "primary-fixed": "#d5e7d8",
+                        "primary-fixed-dim": "#b9cbbc",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b9cbbc",
+                        "inverse-on-surface": "#f2f0ee",
+                        "tertiary-fixed-dim": "#e0bfbf",
+                        "outline": "#737873",
+                        "error": "#ba1a1a",
+                        "deep-pine": "#223127",
+                        "on-secondary-fixed": "#00210f",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#88998c",
+                        "tertiary-fixed": "#fddadb",
+                        "on-primary-fixed-variant": "#3b4a3f",
+                        "surface-variant": "#e4e2e0",
+                        "on-background": "#1b1c1b",
+                        "on-surface-variant": "#434843",
+                        "surface-container": "#efedeb",
+                        "on-surface": "#1b1c1b",
+                        "on-tertiary-container": "#ac8e8f",
+                        "on-error": "#ffffff",
+                        "secondary": "#186c41",
+                        "on-primary-fixed": "#101f15",
+                        "tertiary-container": "#3d2829",
+                        "on-tertiary-fixed-variant": "#584142",
+                        "sage-green": "#68B684",
+                        "surface-container-high": "#eae8e6",
+                        "primary-container": "#223127"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "lg": "40px",
+                        "md": "24px",
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "sm": "12px",
+                        "gutter": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Source Sans 3"],
+                        "display-lg": ["Roboto Flex"],
+                        "body-md": ["Source Sans 3"],
+                        "headline-md": ["Roboto Flex"],
+                        "headline-sm": ["Roboto Flex"],
+                        "body-sm": ["Source Sans 3"],
+                        "label-md": ["Roboto Flex"],
+                        "headline-lg": ["Roboto Flex"],
+                        "label-lg": ["Roboto Flex"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-deep-pine font-body-md antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-deep-pine shadow-xl flex flex-col p-md z-30">
+<!-- Header -->
+<div class="mb-lg flex items-center gap-sm">
+<div class="w-10 h-10 rounded-full bg-sage-green flex items-center justify-center overflow-hidden shrink-0">
+<img alt="Librarian Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0sGlWjqHNvOjemZahXEkyc3ayErlLQTNwY01Fo4J-LzK8h-kGWJU5S7KSw-9azUY9Tkk3G0gQ5BGil1p8g_Rbrp3Z102G_lvfmlmTgvCXiyzFH5I-m4_tdaajiQvvACJkBKv1m3tiYMienGsDBORLaFNLRi5b7InnY2hDF0ob-oCm8ykmcnv9gT-wCNA90MJjqTzVjG2R4DOByofpEdgbwgXXJsp6p9y4XUftnyIrWfLgcy3IH6IixeuShmdMn5JGUgQKk9IToQ4"/>
+</div>
+<div>
+<h2 class="font-headline-sm text-[16px] text-soft-parchment font-bold leading-tight">School Library</h2>
+<p class="font-label-md text-sage-green">Daily Console</p>
+</div>
+</div>
+<!-- Daily Tasks Nav -->
+<nav class="flex-1 flex flex-col gap-xs">
+<p class="text-on-primary-container/60 font-label-md px-4 mb-2 uppercase tracking-wider">Main Tasks</p>
+<a class="bg-sage-green text-primary px-4 py-3 rounded-lg flex items-center gap-3 transition-all font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+<span class="font-label-lg">Daily Overview</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-3 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">sync_alt</span>
+<span class="font-label-lg">Check In / Out</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-3 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-lg">Overdue Items</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-3 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">library_add</span>
+<span class="font-label-lg">Add New Books</span>
+</a>
+<div class="my-4 border-t border-on-primary-container/10"></div>
+<p class="text-on-primary-container/60 font-label-md px-4 mb-2 uppercase tracking-wider">Management</p>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-3 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-lg">Student Directory</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-3 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-lg">Catalog Search</span>
+</a>
+</nav>
+<!-- Footer Nav -->
+<div class="border-t border-on-primary-container/10 pt-sm flex flex-col gap-xs">
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-2 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-label-md">Settings</span>
+</a>
+<a class="text-on-primary-container hover:bg-primary-container hover:text-sage-green px-4 py-2 rounded-lg flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="font-label-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col h-full relative">
+<!-- Top Bar -->
+<header class="border-b border-surface-container-highest bg-white flex justify-between items-center px-lg py-sm w-full z-20 shrink-0">
+<div class="flex items-center gap-md">
+<h1 class="font-headline-md text-deep-pine">Librarian Portal</h1>
+</div>
+<div class="flex-1 max-w-xl mx-lg">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-dusty-rose">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 font-body-sm text-deep-pine focus:ring-2 focus:ring-sage-green transition-all placeholder:text-dusty-rose/60" placeholder="Quick find student or book barcode..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="bg-primary text-white font-label-lg px-4 py-2 rounded-full hover:bg-opacity-90 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+                Scan Barcode
+            </button>
+<div class="w-px h-6 bg-surface-container-highest mx-2"></div>
+<button class="p-2 text-deep-pine hover:bg-surface-container-low rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="flex-1 overflow-y-auto p-lg bg-surface">
+<div class="max-w-container-max mx-auto flex flex-col gap-lg pb-xl">
+<!-- Quick Daily Actions -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<button class="bg-white border-2 border-sage-green/20 hover:border-sage-green p-md rounded-xl flex flex-col items-center gap-sm transition-all group shadow-sm">
+<div class="w-12 h-12 bg-sage-green/10 text-sage-green rounded-full flex items-center justify-center group-hover:bg-sage-green group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[28px]">logout</span>
+</div>
+<span class="font-headline-sm text-deep-pine">Check Out Book</span>
+<span class="text-dusty-rose text-label-md">Process a new borrow</span>
+</button>
+<button class="bg-white border-2 border-teal-blue/20 hover:border-teal-blue p-md rounded-xl flex flex-col items-center gap-sm transition-all group shadow-sm">
+<div class="w-12 h-12 bg-teal-blue/10 text-teal-blue rounded-full flex items-center justify-center group-hover:bg-teal-blue group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[28px]">login</span>
+</div>
+<span class="font-headline-sm text-deep-pine">Check In Book</span>
+<span class="text-dusty-rose text-label-md">Return to shelves</span>
+</button>
+<button class="bg-white border-2 border-primary/10 hover:border-primary p-md rounded-xl flex flex-col items-center gap-sm transition-all group shadow-sm">
+<div class="w-12 h-12 bg-primary/5 text-primary rounded-full flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[28px]">library_add</span>
+</div>
+<span class="font-headline-sm text-deep-pine">Add New Volume</span>
+<span class="text-dusty-rose text-label-md">Expand the collection</span>
+</button>
+</div>
+<!-- Status Counters & Highlights -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-md">
+<!-- Count: Books Out -->
+<div class="bg-white p-md rounded-xl border border-surface-container-highest shadow-sm">
+<p class="text-dusty-rose font-label-md uppercase mb-1">Books Out Today</p>
+<div class="flex items-end justify-between">
+<span class="text-display-lg font-bold text-deep-pine">24</span>
+<span class="text-sage-green font-label-md flex items-center mb-2">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> 12%
+                        </span>
+</div>
+</div>
+<!-- Count: Returns -->
+<div class="bg-white p-md rounded-xl border border-surface-container-highest shadow-sm">
+<p class="text-dusty-rose font-label-md uppercase mb-1">Returns Processed</p>
+<div class="flex items-end justify-between">
+<span class="text-display-lg font-bold text-deep-pine">18</span>
+<span class="text-teal-blue font-label-md flex items-center mb-2">
+                            Steady
+                        </span>
+</div>
+</div>
+<!-- Overdue Highlight - Prominent -->
+<div class="lg:col-span-2 bg-error-container border border-error/20 p-md rounded-xl flex items-center justify-between shadow-md relative overflow-hidden">
+<div class="flex items-center gap-md relative z-10">
+<div class="w-14 h-14 bg-error text-white rounded-full flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-[32px]">priority_high</span>
+</div>
+<div>
+<p class="text-error font-bold text-headline-sm">12 Overdue Items</p>
+<p class="text-on-error-container font-body-sm">Requires immediate follow-up today</p>
+</div>
+</div>
+<button class="bg-error text-white font-label-lg px-6 py-2 rounded-full hover:bg-opacity-90 transition-all relative z-10 shadow-sm">
+                        Handle Now
+                    </button>
+<!-- Abstract Background Shape -->
+<div class="absolute -right-4 -bottom-4 w-32 h-32 bg-error/5 rounded-full"></div>
+</div>
+</div>
+<!-- Main Split: Recent Activity & Urgent Alerts -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<!-- Recent Transactions -->
+<div class="lg:col-span-2 bg-white rounded-xl border border-surface-container-highest shadow-sm overflow-hidden flex flex-col">
+<div class="p-md border-b border-surface-container-highest flex justify-between items-center">
+<h2 class="font-headline-sm text-deep-pine">Today's Transactions</h2>
+<button class="text-teal-blue font-label-md hover:underline">View Log</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low text-dusty-rose font-label-md border-b border-surface-container-highest">
+<tr>
+<th class="py-3 px-md">Book Title</th>
+<th class="py-3 px-md">Student</th>
+<th class="py-3 px-md">Type</th>
+<th class="py-3 px-md">Time</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest text-body-sm">
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-md font-semibold">The Hunger Games</td>
+<td class="py-3 px-md">Liam Wilson (Gr. 9)</td>
+<td class="py-3 px-md">
+<span class="bg-teal-blue/10 text-teal-blue px-2 py-0.5 rounded font-label-md">Check In</span>
+</td>
+<td class="py-3 px-md text-dusty-rose">09:12 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-md font-semibold">Wonder</td>
+<td class="py-3 px-md">Sophie Chen (Gr. 7)</td>
+<td class="py-3 px-md">
+<span class="bg-sage-green/10 text-sage-green px-2 py-0.5 rounded font-label-md">Check Out</span>
+</td>
+<td class="py-3 px-md text-dusty-rose">09:45 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-md font-semibold">Atomic Habits</td>
+<td class="py-3 px-md">Marcus Reed (Gr. 11)</td>
+<td class="py-3 px-md">
+<span class="bg-sage-green/10 text-sage-green px-2 py-0.5 rounded font-label-md">Check Out</span>
+</td>
+<td class="py-3 px-md text-dusty-rose">10:05 AM</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Overdue Alerts Clearly Highlighted -->
+<div class="flex flex-col gap-md">
+<div class="bg-white rounded-xl border border-surface-container-highest shadow-sm overflow-hidden flex-1">
+<div class="p-md bg-error/5 border-b border-error/10 flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+<h2 class="font-headline-sm text-deep-pine">Urgent Overdue</h2>
+</div>
+<div class="p-md flex flex-col gap-sm">
+<!-- Urgent Item -->
+<div class="p-sm bg-surface-container-low border-l-4 border-error rounded-r flex flex-col gap-2">
+<div>
+<p class="font-bold text-deep-pine leading-tight">Harry Potter &amp; the Goblet of Fire</p>
+<p class="text-xs text-dusty-rose">Patron: Jake Ryan (ID: 4421)</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-error font-bold text-label-md">15 Days Overdue</span>
+<button class="text-teal-blue font-label-md hover:underline">Notify Parent</button>
+</div>
+</div>
+<!-- High Priority Item -->
+<div class="p-sm bg-surface-container-low border-l-4 border-error rounded-r flex flex-col gap-2">
+<div>
+<p class="font-bold text-deep-pine leading-tight">Diary of a Wimpy Kid</p>
+<p class="text-xs text-dusty-rose">Patron: Ella Smith (ID: 3902)</p>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-error font-bold text-label-md">12 Days Overdue</span>
+<button class="text-teal-blue font-label-md hover:underline">Send Slip</button>
+</div>
+</div>
+</div>
+<div class="p-sm text-center border-t border-surface-container-highest">
+<button class="text-dusty-rose font-label-md hover:text-deep-pine transition-colors">View All Overdue Slips</button>
+</div>
+</div>
+<!-- Quick Stats Footer -->
+<div class="bg-deep-pine p-md rounded-xl text-white shadow-lg">
+<div class="flex items-center gap-sm mb-2">
+<span class="material-symbols-outlined text-sage-green">analytics</span>
+<span class="font-label-lg">Daily Goal Progress</span>
+</div>
+<div class="w-full bg-white/10 rounded-full h-2 mb-3">
+<div class="bg-sage-green h-2 rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-xs text-on-primary-container/80">75% of morning shelf-check complete</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

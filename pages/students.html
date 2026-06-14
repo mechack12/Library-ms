@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Students - Scholarly Archive</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+
+<aside id="app-sidebar"></aside>
+
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<header class="bg-soft-parchment border-b border-dusty-rose/20 sticky top-0 z-10">
+    <div class="flex justify-between items-center px-lg py-sm h-16">
+        <h2 class="font-headline-md text-deep-pine font-bold">Student Management</h2>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-2 text-dusty-rose text-[18px]">search</span>
+                <input id="student-search" type="text" placeholder="Search students..." class="pl-9 pr-4 py-2 bg-white border border-dusty-rose/30 rounded-lg text-sm focus:outline-none focus:border-teal-blue">
+            </div>
+            <button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-dusty-rose/20">
+                <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 p-xl">
+    <div class="max-w-6xl mx-auto">
+        <!-- Stats -->
+        <div id="stats-row" class="grid grid-cols-4 gap-md mb-8"></div>
+
+        <!-- Student Table -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl overflow-hidden shadow-sm">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex justify-between items-center">
+                <h3 class="font-headline-sm text-deep-pine font-semibold">Registered Students</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="openAddStudentModal()" class="bg-deep-pine hover:bg-opacity-90 text-white px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
+                        <span class="material-symbols-outlined text-[16px]">person_add</span> Add Student
+                    </button>
+                    <button onclick="openReportModal()" class="bg-teal-blue hover:bg-opacity-90 text-white px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
+                        <span class="material-symbols-outlined text-[16px]">assessment</span> Generate Report
+                    </button>
+                    <span id="student-count" class="text-dusty-rose font-label-md text-xs">Loading...</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-7 px-md py-3 bg-surface-container-low text-xs font-semibold text-dusty-rose uppercase tracking-wider">
+                <span class="col-span-2">Student</span>
+                <span>Library ID</span>
+                <span class="text-center">Active Loans</span>
+                <span class="text-center">Reservations</span>
+                <span class="text-center">Status</span>
+                <span class="text-right">Actions</span>
+            </div>
+            <div id="students-list" class="divide-y divide-dusty-rose/10">
+                <div class="px-md py-8 text-center text-dusty-rose">Loading students...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Student Detail Modal -->
+<div id="student-detail-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-3xl mx-4 border border-dusty-rose/20 overflow-hidden flex flex-col max-h-[85vh]">
+        <!-- Header -->
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20 shrink-0">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">account_circle</span> Student Details
+            </h2>
+            <button onclick="closeStudentDetailModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="p-lg overflow-y-auto flex-1 flex flex-col gap-6">
+            <!-- Profile Info Card -->
+            <div class="bg-white border border-dusty-rose/10 rounded-xl p-md flex flex-col md:flex-row gap-4 items-center md:items-start shrink-0 shadow-[0_2px_8px_rgba(34,49,39,0.02)]">
+                <div id="det-avatar" class="w-16 h-16 rounded-full bg-deep-pine text-soft-parchment flex items-center justify-center text-2xl font-bold flex-shrink-0">JD</div>
+                <div class="flex-1 text-center md:text-left">
+                    <h3 id="det-name" class="font-headline-sm text-deep-pine font-bold text-lg">John Doe</h3>
+                    <p id="det-id" class="text-dusty-rose font-mono text-xs mt-1">ID: ...</p>
+                    <div class="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
+                        <span id="det-badge-loans" class="px-2 py-0.5 rounded font-label-md text-xs bg-teal-blue/10 text-teal-blue">0 Loans</span>
+                        <span id="det-badge-overdue" class="px-2 py-0.5 rounded font-label-md text-xs bg-red-100 text-red-800 hidden">0 Overdue</span>
+                        <span id="det-badge-res" class="px-2 py-0.5 rounded font-label-md text-xs bg-sage-green/10 text-sage-green">0 Reserved</span>
+                    </div>
+                </div>
+                <div class="text-center md:text-right shrink-0">
+                    <p class="text-xs text-dusty-rose">Patron Library ID</p>
+                    <p id="det-lib-id" class="font-mono text-sm font-bold text-deep-pine mt-0.5">—</p>
+                    <p class="text-xs text-dusty-rose mt-2">Joined Date</p>
+                    <p id="det-joined" class="text-sm text-deep-pine font-semibold mt-0.5">—</p>
+                </div>
+            </div>
+            <!-- Tabs -->
+            <div class="flex border-b border-dusty-rose/20 shrink-0">
+                <button id="tab-det-loans" onclick="switchDetailTab('loans')" class="pb-2 px-4 font-label-lg border-b-2 border-teal-blue text-teal-blue font-bold">Active Loans</button>
+                <button id="tab-det-history" onclick="switchDetailTab('history')" class="pb-2 px-4 font-label-lg border-b-2 border-transparent text-dusty-rose hover:text-teal-blue">Borrow History</button>
+                <button id="tab-det-reservations" onclick="switchDetailTab('reservations')" class="pb-2 px-4 font-label-lg border-b-2 border-transparent text-dusty-rose hover:text-teal-blue">Reservations</button>
+            </div>
+            <!-- Tab Contents -->
+            <div class="flex-1 min-h-[200px]">
+                <!-- Active Loans Tab -->
+                <div id="panel-det-loans" class="detail-tab-panel flex flex-col gap-2">
+                    <p class="text-center text-dusty-rose py-8">No active loans.</p>
+                </div>
+                <!-- Borrow History Tab -->
+                <div id="panel-det-history" class="detail-tab-panel flex flex-col gap-2 hidden">
+                    <p class="text-center text-dusty-rose py-8">No past borrows.</p>
+                </div>
+                <!-- Reservations Tab -->
+                <div id="panel-det-reservations" class="detail-tab-panel flex flex-col gap-2 hidden">
+                    <p class="text-center text-dusty-rose py-8">No pending reservations.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="bg-surface-container-low px-lg py-4 border-t border-dusty-rose/20 flex justify-between items-center shrink-0">
+            <button id="btn-print-student-report" class="bg-deep-pine text-soft-parchment font-label-lg px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2 shadow-sm transition-all text-sm">
+                <span class="material-symbols-outlined text-[18px]">print</span> Print Student Report
+            </button>
+            <button onclick="closeStudentDetailModal()" class="border border-dusty-rose text-dusty-rose font-label-lg px-4 py-2 rounded-lg hover:bg-dusty-rose/10 transition-colors text-sm">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Generator Modal -->
+<div id="report-generator-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">assessment</span> Library Report Generator
+            </h2>
+            <button onclick="closeReportModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Form -->
+        <div class="p-lg flex flex-col gap-md">
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="report-type">Report Content *</label>
+                <select id="report-type" class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none">
+                    <option value="all-students">All Students Summary (Active, Overdue, Reserves)</option>
+                    <option value="active-loans">Active Loans Report (Patron details, Book, Due dates)</option>
+                    <option value="overdue-loans">Overdue Loans Report (Patron details, Book, Overdue days)</option>
+                    <option value="popular-books">Popular Inventory Report (Most borrowed books)</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="report-format">Export Format *</label>
+                <select id="report-format" class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none">
+                    <option value="print">Printable HTML Report (PDF)</option>
+                    <option value="csv">Download CSV File</option>
+                </select>
+            </div>
+            
+            <button onclick="generateReport()" class="mt-sm w-full py-sm bg-sage-green hover:bg-secondary text-white font-label-lg text-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">rocket_launch</span> Generate Export
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div id="add-student-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center overflow-y-auto pt-10 pb-10">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">person_add</span> Add New Student
+            </h2>
+            <button onclick="closeAddStudentModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Form -->
+        <form id="add-student-form" class="p-lg flex flex-col gap-md" onsubmit="event.preventDefault(); submitAddStudent();">
+            <div id="add-status-msg" class="hidden mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+            
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-full-name">Full Name *</label>
+                <input id="add-full-name" type="text" required placeholder="e.g. Jane Doe" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-user-id">Username or Email *</label>
+                <input id="add-user-id" type="text" required placeholder="janedoe or jane@example.com" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-password">Password *</label>
+                <input id="add-password" type="password" required placeholder="••••••••" minlength="6" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+            
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-library-id">Library ID</label>
+                <input id="add-library-id" type="text" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                <p class="text-xs text-dusty-rose">Optional. Used for scanning library cards.</p>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-4 border-t border-dusty-rose/20 pt-4">
+                <button type="button" onclick="closeAddStudentModal()" class="px-4 py-2 text-dusty-rose font-label-lg hover:bg-dusty-rose/10 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" id="btn-create-student" class="px-6 py-2 bg-deep-pine hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">person_add</span> Create Student
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div id="edit-student-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">edit</span> Edit Student
+            </h2>
+            <button onclick="closeEditStudentModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Form -->
+        <form id="edit-student-form" class="p-lg flex flex-col gap-md" onsubmit="event.preventDefault(); submitEditStudent();">
+            <input type="hidden" id="edit-student-id">
+            
+            <div id="edit-status-msg" class="hidden mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+            
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="edit-full-name">Full Name *</label>
+                <input id="edit-full-name" type="text" required class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+            
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="edit-library-id">Library ID</label>
+                <input id="edit-library-id" type="text" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                <p class="text-xs text-dusty-rose">Optional. Used for scanning library cards.</p>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-4 border-t border-dusty-rose/20 pt-4">
+                <button type="button" onclick="closeEditStudentModal()" class="px-4 py-2 text-dusty-rose font-label-lg hover:bg-dusty-rose/10 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" id="btn-save-student" class="px-6 py-2 bg-teal-blue hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<script src="../js/students.js"></script>
+</body></html>

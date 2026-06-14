@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Librarian Management Console</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:wght@400;500;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+
+</head>
+<body class="bg-soft-parchment text-deep-pine font-body-md antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar — injected dynamically by nav.js based on actual user role -->
+<aside id="app-sidebar"></aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col h-full relative">
+<!-- TopAppBar (Shared Component) -->
+<header class="border-b border-dusty-rose/20 bg-soft-parchment dark:bg-background flex justify-between items-center px-lg py-sm w-full z-20 shrink-0">
+<!-- Left Side: Brand & Nav -->
+<div class="flex items-center gap-lg">
+<span class="font-headline-lg text-headline-lg font-bold text-deep-pine">LMS</span>
+<nav class="hidden md:flex gap-md">
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Catalog</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Reservations</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Overdue</a>
+</nav>
+</div>
+<!-- Middle: Search -->
+<div class="flex-1 max-w-md mx-lg hidden lg:block">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-deep-pine">search</span>
+<input class="w-full bg-surface-container-low border border-dusty-rose/30 rounded-lg py-2 pl-10 pr-4 font-body-sm text-deep-pine focus:outline-none focus:border-sage-green focus:ring-1 focus:ring-sage-green transition-shadow placeholder:text-dusty-rose shadow-[0_4px_12px_rgba(34,49,39,0.05)]" placeholder="Search catalog, users, or ISBN..." type="text"/>
+</div>
+</div>
+<!-- Right Side: Actions -->
+<div class="flex items-center gap-md">
+<button class="hidden lg:flex items-center gap-xs font-label-lg text-teal-blue hover:opacity-80 transition-opacity">
+                    Action Hub
+                </button>
+<div class="flex items-center gap-sm">
+<button class="p-2 text-deep-pine hover:text-teal-blue transition-colors rounded-full hover:bg-dusty-rose/10 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-deep-pine hover:text-teal-blue transition-colors rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-dim overflow-hidden border border-dusty-rose/20">
+<img id="user-avatar" alt="User Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="flex-1 overflow-y-auto p-lg bg-background">
+<div class="max-w-container-max mx-auto flex flex-col gap-lg pb-xl">
+<!-- Page Header & Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-deep-pine mb-xs">Dashboard Overview</h1>
+<p class="font-body-md text-dusty-rose">Monitor library operations, inventory status, and user activity.</p>
+</div>
+<div class="flex flex-wrap items-center gap-sm">
+<button onclick="openManageUsersModal()" class="border border-teal-blue text-teal-blue font-label-lg px-4 py-2 rounded-lg hover:bg-teal-blue hover:text-white transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+                            Manage Users
+                        </button>
+<button onclick="openAddBookModal()" class="bg-sage-green text-on-primary font-label-lg px-4 py-2 rounded-lg hover:bg-opacity-90 shadow-sm flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]">add_box</span>
+                            Add New Book
+                        </button>
+</div>
+</div>
+<!-- Metrics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<!-- Metric Card: Total Books -->
+<div class="bg-surface-container-lowest border border-dusty-rose/20 rounded-xl p-md flex flex-col shadow-[0_2px_8px_rgba(34,49,39,0.02)]">
+<div class="flex items-start justify-between mb-sm">
+<div class="p-sm bg-sage-green/10 rounded-lg text-sage-green">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">library_books</span>
+</div>
+<span class="font-label-md text-sage-green bg-sage-green/10 px-2 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +124 this month
+                            </span>
+</div>
+<h3 class="font-body-sm text-dusty-rose mb-xs">Total Catalog Volumes</h3>
+<div id="stat-total-books" class="font-display-lg text-display-lg text-deep-pine">...</div>
+</div>
+<!-- Metric Card: Active Borrows -->
+<div class="bg-surface-container-lowest border border-dusty-rose/20 rounded-xl p-md flex flex-col shadow-[0_2px_8px_rgba(34,49,39,0.02)]">
+<div class="flex items-start justify-between mb-sm">
+<div class="p-sm bg-teal-blue/10 rounded-lg text-teal-blue">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">book_online</span>
+</div>
+<span class="font-label-md text-teal-blue bg-teal-blue/10 px-2 py-1 rounded-full">Current Status</span>
+</div>
+<h3 class="font-body-sm text-dusty-rose mb-xs">Active Borrows</h3>
+<div id="stat-active-loans" class="font-display-lg text-display-lg text-deep-pine">...</div>
+</div>
+<!-- Metric Card: Overdue Items -->
+<div class="bg-error-container border border-error/20 rounded-xl p-md flex flex-col relative overflow-hidden">
+<!-- Abstract decorative shape for overdue -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+<div class="flex items-start justify-between mb-sm relative z-10">
+<div class="p-sm bg-error/10 rounded-lg text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<span class="font-label-md text-error bg-error/10 px-2 py-1 rounded-full flex items-center gap-1 font-bold">
+                                Requires Action
+                            </span>
+</div>
+<h3 class="font-body-sm text-on-error-container mb-xs relative z-10">Overdue Items</h3>
+<div id="stat-overdue-loans" class="font-display-lg text-display-lg text-error relative z-10">...</div>
+</div>
+</div>
+<!-- Main Content Split -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<!-- Transaction Feed (Spans 2 columns) -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-dusty-rose/20 rounded-xl flex flex-col shadow-[0_2px_8px_rgba(34,49,39,0.02)] overflow-hidden">
+<div class="p-md border-b border-dusty-rose/10 flex justify-between items-center bg-soft-parchment/30">
+<h2 class="font-headline-sm text-headline-sm font-bold text-deep-pine">Recent Transactions</h2>
+<button class="text-teal-blue font-label-md hover:underline">View All Log</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-dusty-rose/10 font-label-md text-dusty-rose">
+<tr>
+<th class="py-3 px-md font-medium">Item Title</th>
+<th class="py-3 px-md font-medium">Patron</th>
+<th class="py-3 px-md font-medium">Action</th>
+<th class="py-3 px-md font-medium">Time</th>
+</tr>
+</thead>
+<tbody id="recent-transactions-list" class="font-body-sm text-deep-pine divide-y divide-dusty-rose/10">
+    <tr><td colspan="4" class="py-3 px-md text-center text-dusty-rose">Loading transactions...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Overdue Alerts Priorities -->
+<div class="bg-surface-container-lowest border border-dusty-rose/20 rounded-xl flex flex-col shadow-[0_2px_8px_rgba(34,49,39,0.02)]">
+<div class="p-md border-b border-dusty-rose/10 flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm font-bold text-deep-pine flex items-center gap-2">
+<span class="material-symbols-outlined text-dusty-rose">assignment_late</span>
+                                Priority Alerts
+                            </h2>
+</div>
+<div id="overdue-alerts-list" class="p-md flex flex-col gap-sm flex-1 overflow-y-auto">
+    <p class="text-center text-dusty-rose text-sm py-4">No overdue alerts found.</p>
+</div>
+<div class="p-sm border-t border-dusty-rose/10 text-center">
+<button class="text-dusty-rose font-label-md hover:text-deep-pine transition-colors">View All Overdue Items</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<!-- Add Book Modal -->
+<div id="add-book-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-dusty-rose/20 overflow-hidden">
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">library_add</span> Add New Book
+            </h2>
+            <button onclick="closeAddBookModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="add-book-form" class="p-lg flex flex-col gap-md">
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="book-title">Book Title *</label>
+                <input class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none" id="book-title" placeholder="e.g. Introduction to Algorithms" type="text" required />
+            </div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="book-author">Author *</label>
+                <input class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none" id="book-author" placeholder="e.g. Thomas H. Cormen" type="text" required />
+            </div>
+            <div class="grid grid-cols-2 gap-md">
+                <div class="flex flex-col gap-xs">
+                    <label class="font-label-md text-label-md text-deep-pine" for="book-isbn">ISBN</label>
+                    <input class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none font-mono" id="book-isbn" placeholder="978-0-XXX-XXXXX-X" type="text" />
+                </div>
+                <div class="flex flex-col gap-xs">
+                    <label class="font-label-md text-label-md text-deep-pine" for="book-category">Category</label>
+                    <select class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none" id="book-category">
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Philosophy">Philosophy</option>
+                        <option value="Architecture">Architecture</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Literature">Literature</option>
+                        <option value="History">History</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Art">Art</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="book-copies">Total Copies</label>
+                <input class="w-full px-4 py-sm rounded-lg bg-surface-container-low border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none" id="book-copies" placeholder="1" type="number" min="1" value="1" />
+            </div>
+            <button id="add-book-submit" class="mt-sm w-full py-sm bg-sage-green hover:bg-secondary text-white font-label-lg text-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2" type="submit">
+                <span class="material-symbols-outlined text-[20px]">add_circle</span> Add to Catalog
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Manage Users Modal -->
+<div id="manage-users-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-2xl mx-4 border border-dusty-rose/20 overflow-hidden max-h-[80vh] flex flex-col">
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20 shrink-0">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">group</span> Registered Users
+            </h2>
+            <button onclick="closeManageUsersModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="users-list-container" class="p-md overflow-y-auto flex-1">
+            <p class="text-center text-dusty-rose py-6">Loading users...</p>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+    // Toast notification system
+    function showToast(message, type = 'success') {
+        const existing = document.getElementById('toast-notification');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        const bgColor = type === 'success' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+        const icon = type === 'success' ? 'check_circle' : 'error';
+        toast.className = `fixed bottom-6 right-6 ${bgColor} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md border border-dusty-rose/20`;
+        toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+    }
+
+    // Modal controls
+    function openAddBookModal() {
+        document.getElementById('add-book-modal').style.display = 'flex';
+    }
+    function closeAddBookModal() {
+        document.getElementById('add-book-modal').style.display = 'none';
+        document.getElementById('add-book-form').reset();
+    }
+    function openManageUsersModal() {
+        document.getElementById('manage-users-modal').style.display = 'flex';
+        loadUsers();
+    }
+    function closeManageUsersModal() {
+        document.getElementById('manage-users-modal').style.display = 'none';
+    }
+
+    // Close modals on backdrop click
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'add-book-modal') closeAddBookModal();
+        if (e.target.id === 'manage-users-modal') closeManageUsersModal();
+    });
+
+    // Add Book form submission
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('add-book-submit');
+            const originalHTML = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Adding...';
+
+            const title = document.getElementById('book-title').value.trim();
+            const author = document.getElementById('book-author').value.trim();
+            const isbn = document.getElementById('book-isbn').value.trim();
+            const category = document.getElementById('book-category').value;
+            const copies = parseInt(document.getElementById('book-copies').value) || 1;
+
+            try {
+                const { error } = await window.sbClient.from('books').insert({
+                    title,
+                    author,
+                    isbn: isbn || null,
+                    category,
+                    total_copies: copies,
+                    available_copies: copies
+                });
+
+                if (error) throw error;
+
+                showToast(`"${title}" added to catalog successfully!`);
+                closeAddBookModal();
+                loadLibrarianPortal(); // Refresh stats
+            } catch (err) {
+                showToast(err.message || 'Failed to add book.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalHTML;
+            }
+        });
+    });
+
+    // Load users list
+    async function loadUsers() {
+        const container = document.getElementById('users-list-container');
+        container.innerHTML = '<p class="text-center text-dusty-rose py-6">Loading users...</p>';
+
+        const { data: users, error } = await window.sbClient.from('library_users').select('*').order('created_at', { ascending: false });
+
+        if (error || !users) {
+            container.innerHTML = '<p class="text-center text-error py-6">Failed to load users.</p>';
+            return;
+        }
+
+        if (users.length === 0) {
+            container.innerHTML = '<p class="text-center text-dusty-rose py-6">No registered users yet.</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <table class="w-full text-left">
+                <thead class="border-b border-dusty-rose/20 font-label-md text-dusty-rose">
+                    <tr>
+                        <th class="py-3 px-4">Name</th>
+                        <th class="py-3 px-4">Library ID</th>
+                        <th class="py-3 px-4">Role</th>
+                        <th class="py-3 px-4">Joined</th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-sm text-deep-pine divide-y divide-dusty-rose/10">
+                    ${users.map(u => `
+                        <tr class="hover:bg-surface-container-low/50 transition-colors">
+                            <td class="py-3 px-4 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-sage-green/20 flex items-center justify-center text-sage-green font-label-md">${u.full_name.charAt(0).toUpperCase()}</div>
+                                ${u.full_name}
+                            </td>
+                            <td class="py-3 px-4 font-mono text-xs text-dusty-rose">${u.library_id}</td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded font-label-md ${u.role === 'librarian' ? 'bg-teal-blue/10 text-teal-blue' : 'bg-sage-green/10 text-sage-green'}">                                    
+                                    ${u.role === 'librarian' ? 'Librarian' : 'Student'}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-dusty-rose">${new Date(u.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async function loadLibrarianPortal() {
+        // Fetch Total Books
+        const { count: totalBooks } = await window.sbClient.from('books').select('*', { count: 'exact', head: true });
+        document.getElementById('stat-total-books').innerText = totalBooks || 0;
+
+        // Fetch Active Borrows
+        const { count: activeLoans } = await window.sbClient.from('loans').select('*', { count: 'exact', head: true }).eq('status', 'active');
+        document.getElementById('stat-active-loans').innerText = activeLoans || 0;
+
+        // Fetch Overdue Loans
+        const { count: overdueLoans } = await window.sbClient
+            .from('loans')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'active')
+            .lt('due_date', new Date().toISOString());
+        document.getElementById('stat-overdue-loans').innerText = overdueLoans || 0;
+
+        // Fetch Recent Transactions
+        const { data: recentLoans } = await window.sbClient
+            .from('loans')
+            .select('*, books(title, isbn), library_users(full_name)')
+            .order('borrow_date', { ascending: false })
+            .limit(5);
+
+        const txList = document.getElementById('recent-transactions-list');
+        if (recentLoans && recentLoans.length > 0) {
+            txList.innerHTML = recentLoans.map(loan => `
+                <tr class="hover:bg-surface-container-low/50 transition-colors">
+                    <td class="py-3 px-md">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-12 bg-surface-dim rounded border border-dusty-rose/20 flex-shrink-0 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-dusty-rose text-[20px]">menu_book</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-on-surface">${loan.books?.title || 'Unknown'}</p>
+                                <p class="text-xs text-dusty-rose">ISBN: ${loan.books?.isbn || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-md">${loan.library_users?.full_name || 'Unknown User'}</td>
+                    <td class="py-3 px-md">
+                        <span class="inline-flex items-center gap-1 font-label-md px-2 py-0.5 rounded ${
+                            loan.status === 'active' 
+                                ? (new Date(loan.due_date) < new Date() ? 'text-error bg-error/10' : 'text-teal-blue bg-teal-blue/10')
+                                : 'text-sage-green bg-sage-green/10'
+                        }">
+                            <span class="material-symbols-outlined text-[16px]">${
+                                loan.status === 'active' 
+                                    ? (new Date(loan.due_date) < new Date() ? 'warning' : 'arrow_upward')
+                                    : 'check_circle'
+                            }</span> ${
+                                loan.status === 'active' 
+                                    ? (new Date(loan.due_date) < new Date() ? 'Overdue' : 'Borrowed')
+                                    : 'Returned'
+                            }
+                        </span>
+                    </td>
+                    <td class="py-3 px-md text-dusty-rose">${new Date(loan.borrow_date).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        } else {
+            txList.innerHTML = '<tr><td colspan="4" class="py-3 px-md text-center text-dusty-rose">No recent transactions.</td></tr>';
+        }
+
+        // Overdue alerts list
+        if (overdueLoans && overdueLoans > 0) {
+            const { data: overdueItems } = await window.sbClient
+                .from('loans')
+                .select('*, books(title), library_users(full_name)')
+                .eq('status', 'active')
+                .lt('due_date', new Date().toISOString())
+                .order('due_date', { ascending: true })
+                .limit(5);
+
+            const alertsList = document.getElementById('overdue-alerts-list');
+            if (overdueItems && overdueItems.length > 0) {
+                alertsList.innerHTML = overdueItems.map(item => {
+                    const daysOverdue = Math.ceil((new Date() - new Date(item.due_date)) / (1000 * 60 * 60 * 24));
+                    return `
+                        <div class="bg-error-container/50 border border-error/20 rounded-lg p-sm flex items-start gap-3">
+                            <span class="material-symbols-outlined text-error text-[20px] mt-0.5">schedule</span>
+                            <div class="flex-1">
+                                <p class="font-label-md text-on-error-container font-bold">${item.books?.title || 'Unknown Book'}</p>
+                                <p class="font-body-sm text-dusty-rose">${item.library_users?.full_name || 'Unknown'} — ${daysOverdue} day(s) overdue</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { initNav().then(() => initNotifications()); loadLibrarianPortal(); });
+</script>
+</body></html>

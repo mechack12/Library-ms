@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Account Settings</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+<!-- SideNavBar — injected dynamically by nav.js based on actual user role -->
+<aside id="app-sidebar"></aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-soft-parchment dark:bg-background border-b border-dusty-rose/20 docked full-width top-0 sticky z-10">
+<div class="flex justify-between items-center px-lg py-sm h-16 w-full">
+<!-- Search Bar (on_left as per JSON, but leaving space for potential brand if needed, though side nav has it) -->
+<div class="flex-1 max-w-xl relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-deep-pine">search</span>
+<input class="w-full bg-surface-container-lowest border border-dusty-rose/20 rounded-full py-2 pl-10 pr-4 text-body-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-teal-blue shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow" placeholder="Search catalog, authors, ISBN..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-md mx-xl">
+<a class="text-deep-pine font-bold border-b-2 border-sage-green pb-1 font-headline-sm text-headline-sm" href="#">Catalog</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Reservations</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Overdue</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-sm">
+<button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="bg-sage-green text-white font-label-lg px-4 py-2 rounded-lg hover:opacity-90 transition-opacity ml-2">Action Hub</button>
+<div class="w-10 h-10 rounded-full overflow-hidden ml-4 border border-dusty-rose/20">
+<img id="user-avatar" alt="User Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-xl overflow-y-auto">
+<div class="max-w-container-max mx-auto space-y-xl">
+<!-- Settings Header -->
+<div>
+<h2 class="font-display-lg text-display-lg text-deep-pine">Account Settings</h2>
+<p class="font-body-lg text-body-lg text-dusty-rose mt-2">Manage your profile and preferences.</p>
+</div>
+<!-- Settings Form -->
+<section class="max-w-2xl bg-white border border-dusty-rose/20 rounded-xl p-lg flex flex-col">
+    <div class="flex items-center gap-6 mb-8 pb-8 border-b border-dusty-rose/20">
+        <div class="w-24 h-24 rounded-full overflow-hidden border border-dusty-rose/20 relative group">
+            <img id="settings-avatar-preview" alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEXr1W0WZRYYX1_d5VNilUEV8O7w83r37IgZPCgwzMR3Feq_ajHRehOLFjqaTqRN8W6qwmvJQNY7BRZ9JYGUzf8ts1_WiIRvJ69C7nwNw4mXW3_NvqKvpz20wvnIINE4pNc6k9KNkdbvmLb4usdDxQvBQ-lGE9QP8WxLHQbYgzkz0uniuWY0mXlWhliPn5mUyy1i1Xsn0InSuHGRTeOlrCSwsUx1P2dc7J4HIf6Yc3zcZdwNk0KMmLyAQlctWvAVNV4je2RrSUXIQ"/>
+            <div class="absolute inset-0 bg-deep-pine/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <span class="material-symbols-outlined text-white">edit</span>
+            </div>
+        </div>
+        <div>
+            <h3 class="font-headline-md text-deep-pine">Profile Picture</h3>
+            <p class="font-body-sm text-dusty-rose mt-1">Provide a URL for your avatar image.</p>
+        </div>
+    </div>
+
+    <form id="settings-form" class="space-y-6">
+        <div>
+            <label class="block font-label-lg text-deep-pine mb-2">Upload Avatar</label>
+            <input type="file" id="input-avatar-file" accept="image/*" class="w-full bg-surface-container-lowest border border-dusty-rose/40 rounded-lg py-2 px-4 text-body-md focus:outline-none focus:ring-1 focus:ring-teal-blue" />
+            <input type="hidden" id="input-avatar-url" />
+            <p class="font-body-sm text-dusty-rose mt-1 text-xs">File will be uploaded and used as your avatar.</p>
+        </div>
+
+        <div>
+            <label class="block font-label-lg text-deep-pine mb-2">Full Name</label>
+            <input id="input-full-name" type="text" class="w-full bg-surface-container-lowest border border-dusty-rose/40 rounded-lg py-2 px-4 text-body-md focus:outline-none focus:ring-1 focus:ring-teal-blue" required>
+        </div>
+        
+        <div>
+            <label class="block font-label-lg text-deep-pine mb-2">Email</label>
+            <input id="input-email" type="email" class="w-full bg-surface-container-highest border border-dusty-rose/20 rounded-lg py-2 px-4 text-body-md text-dusty-rose cursor-not-allowed" disabled>
+            <p class="font-body-sm text-dusty-rose mt-1 text-xs">Email cannot be changed.</p>
+        </div>
+
+        <div class="pt-6 mt-6 border-t border-dusty-rose/20 flex justify-end gap-4">
+            <button type="button" onclick="loadSettings()" class="text-dusty-rose font-label-md px-4 py-2 hover:bg-dusty-rose/10 rounded-lg transition-colors">Discard</button>
+            <button type="submit" id="save-settings-btn" class="bg-sage-green text-white font-label-lg px-6 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</section>
+</div>
+</main>
+</div>
+<script>
+    let currentUserId = null;
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+        const existing = document.getElementById('toast-notification');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        const bgColor = type === 'success' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container';
+        const icon = type === 'success' ? 'check_circle' : 'error';
+        toast.className = `fixed bottom-6 right-6 ${bgColor} px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-3 font-body-md border border-dusty-rose/20`;
+        toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
+    }
+
+    async function loadSettings() {
+        const { data: { session } } = await window.sbClient.auth.getSession();
+        
+        if (!session) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        currentUserId = session.user.id;
+        document.getElementById('input-email').value = session.user.email;
+
+        // Fetch user profile from DB
+        const { data: profile, error } = await window.sbClient
+            .from('library_users')
+            .select('full_name, profile_picture_url, role')
+            .eq('id', session.user.id)
+            .single();
+
+        if (error) {
+            showToast('Failed to load profile data', 'error');
+            return;
+        }
+
+        document.getElementById('input-full-name').value = profile.full_name || '';
+        document.getElementById('input-avatar-url').value = profile.profile_picture_url || '';
+        
+        if (profile.profile_picture_url) {
+            document.getElementById('settings-avatar-preview').src = profile.profile_picture_url;
+            // Update header avatar too
+            const headerAvatar = document.querySelector('header img');
+            if (headerAvatar) headerAvatar.src = profile.profile_picture_url;
+        }
+
+        // Adjust sidebar nav based on role
+        if (profile.role === 'librarian') {
+            // Modify navigation for librarian
+            // Simply hide/show elements or redirect
+        }
+    }
+
+    // Live preview avatar URL
+    document.getElementById('input-avatar-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        const preview = document.getElementById('settings-avatar-preview');
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => { preview.src = event.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('save-settings-btn');
+        btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Saving...';
+        btn.disabled = true;
+
+        const fullName = document.getElementById('input-full-name').value;
+        let avatarUrl = document.getElementById('input-avatar-url').value;
+        const fileInput = document.getElementById('input-avatar-file');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const filePath = `${currentUserId}/${file.name}`;
+            const { error: uploadError, data } = await window.sbClient.storage.from('avatars').upload(filePath, file, { upsert: true });
+            if (uploadError) throw uploadError;
+            const { data: publicUrlData } = window.sbClient.storage.from('avatars').getPublicUrl(filePath);
+            avatarUrl = publicUrlData.publicUrl;
+        }
+
+        try {
+            const { error } = await window.sbClient
+                .from('library_users')
+                .update({ 
+                    full_name: fullName,
+                    profile_picture_url: avatarUrl || null
+                })
+                .eq('id', currentUserId);
+
+            if (error) throw error;
+
+            showToast('Settings saved successfully!');
+            
+            // Update auth metadata
+            await window.sbClient.auth.updateUser({
+                data: { full_name: fullName, profile_picture_url: avatarUrl }
+            });
+            
+            // Update header avatar immediately
+            if (avatarUrl) {
+                const headerAvatar = document.querySelector('header img');
+                if (headerAvatar) headerAvatar.src = avatarUrl;
+            }
+
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to save settings.', 'error');
+        } finally {
+            btn.innerHTML = 'Save Changes';
+            btn.disabled = false;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+    initNav().then(() => initNotifications());
+    loadSettings();
+});
+</script>
+</body></html>

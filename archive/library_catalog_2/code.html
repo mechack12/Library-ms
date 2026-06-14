@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Book Catalog</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&amp;family=Source+Sans+3:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#d5e7d8",
+                    "dusty-rose": "#7C6C77",
+                    "teal-blue": "#56A3A6",
+                    "surface-container-low": "#f5f3f1",
+                    "surface-dim": "#dbdad8",
+                    "on-surface-variant": "#434843",
+                    "primary-container": "#223127",
+                    "secondary": "#186c41",
+                    "on-secondary-fixed": "#00210f",
+                    "background": "#fbf9f7",
+                    "primary": "#0d1c13",
+                    "on-surface": "#1b1c1b",
+                    "on-error-container": "#93000a",
+                    "soft-parchment": "#F1DAC4",
+                    "on-secondary-fixed-variant": "#00522d",
+                    "on-primary-container": "#88998c",
+                    "inverse-on-surface": "#f2f0ee",
+                    "surface-container-highest": "#e4e2e0",
+                    "on-background": "#1b1c1b",
+                    "primary-fixed-dim": "#b9cbbc",
+                    "secondary-fixed": "#a4f4bd",
+                    "outline-variant": "#c3c8c2",
+                    "deep-pine": "#223127",
+                    "surface-bright": "#fbf9f7",
+                    "on-tertiary-fixed": "#291617",
+                    "surface-tint": "#526256",
+                    "tertiary-fixed": "#fddadb",
+                    "secondary-container": "#a1f1bb",
+                    "surface-variant": "#e4e2e0",
+                    "tertiary": "#261415",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#101f15",
+                    "inverse-primary": "#b9cbbc",
+                    "surface-container-high": "#eae8e6",
+                    "secondary-fixed-dim": "#88d7a3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#30302f",
+                    "error": "#ba1a1a",
+                    "surface": "#fbf9f7",
+                    "on-primary-fixed-variant": "#3b4a3f",
+                    "on-tertiary-fixed-variant": "#584142",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#efedeb",
+                    "on-tertiary-container": "#ac8e8f",
+                    "on-secondary-container": "#1f7045",
+                    "tertiary-fixed-dim": "#e0bfbf",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#3d2829",
+                    "outline": "#737873",
+                    "sage-green": "#68B684"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "container-max": "1280px",
+                    "sm": "12px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "xl": "64px",
+                    "base": "8px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Roboto Flex"],
+                    "label-lg": ["Roboto Flex"],
+                    "label-md": ["Roboto Flex"],
+                    "body-sm": ["Source Sans 3"],
+                    "display-lg": ["Roboto Flex"],
+                    "body-md": ["Source Sans 3"],
+                    "body-lg": ["Source Sans 3"],
+                    "headline-md": ["Roboto Flex"],
+                    "headline-lg": ["Roboto Flex"]
+            },
+            "fontSize": {
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.1px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.5px", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
+<!-- Shared Component: SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-deep-pine dark:bg-primary-container shadow-xl flex flex-col p-md z-50">
+<!-- Header -->
+<div class="mb-lg">
+<div class="flex items-center gap-sm mb-md">
+<div class="w-10 h-10 rounded-full bg-soft-parchment flex items-center justify-center overflow-hidden">
+<img alt="Librarian Profile" class="w-full h-full object-cover" data-alt="A close-up portrait of a thoughtful librarian in a warm, dimly lit library setting. The lighting is soft and academic, casting gentle shadows. The mood is focused and reliable, reflecting a tactile, organic aesthetic with muted forest and parchment tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAccLIqlmzkplhm1gFNbzzvgUo3jQTK-2D6MCNqB8qI-ixtNeZn08pP6cgvbgjEqBeuXGmBIV1Ky95jWs2UtGp-v2GVqYu7MiFeh1JTtBZAl2vF4zA5_vSVXzndPbNIP1st8gpB1KcoeFK6FaYl-79P4GlQI4de0wLKxnYtZryACLp1_Db4tbswxPg4uQUGIL1t0xne_lsxOGq8UfjYyDBMpacwbiSmPpiOhFYbHxu68V3Khpsycq9mDYTAvQVAFmfHoL1beq_93mg"/>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-soft-parchment">Scholarly Archive</h1>
+<p class="font-body-sm text-body-sm text-on-primary-container">Librarian Portal</p>
+</div>
+</div>
+<button class="w-full bg-sage-green text-primary font-label-lg text-label-lg py-sm px-md rounded-lg flex justify-center items-center gap-xs hover:bg-secondary-fixed transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                Borrow/Return
+            </button>
+</div>
+<!-- Main Navigation (Inventory is Active for Catalog) -->
+<nav class="flex-1 flex flex-col gap-xs">
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">dashboard</span>
+                Dashboard
+            </a>
+<a class="bg-sage-green text-primary px-4 py-3 rounded-lg flex items-center gap-3 transition-colors font-label-md text-label-md scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px] fill">menu_book</span>
+                Inventory
+            </a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">swap_horiz</span>
+                Transactions
+            </a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">group</span>
+                Students
+            </a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">category</span>
+                Categories
+            </a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">assessment</span>
+                Reports
+            </a>
+</nav>
+<!-- Footer Navigation -->
+<div class="mt-auto border-t border-on-primary-container/20 pt-sm flex flex-col gap-xs">
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">settings</span>
+                Settings
+            </a>
+<a class="text-on-primary-container hover:bg-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-sage-green font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-sage-green">logout</span>
+                Logout
+            </a>
+</div>
+</aside>
+<!-- Shared Component: TopAppBar -->
+<header class="docked full-width top-0 border-b border-dusty-rose/20 bg-soft-parchment flex justify-between items-center px-lg py-sm ml-64 w-[calc(100%-16rem)] fixed z-40 h-[72px]">
+<!-- Left: Search (Persistent fixture per guidelines) -->
+<div class="flex-1 max-w-md">
+<div class="relative flex items-center w-full h-10 rounded-lg border border-dusty-rose/30 bg-surface-bright shadow-[0_4px_12px_rgba(34,49,39,0.05)] overflow-hidden focus-within:border-teal-blue focus-within:ring-1 focus-within:ring-teal-blue transition-all">
+<div class="grid place-items-center h-full w-12 text-deep-pine/70">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="peer h-full w-full outline-none text-body-sm text-deep-pine bg-transparent pr-2 placeholder-dusty-rose/70" id="global-search" placeholder="Search catalog, authors, or ISBN..." type="text"/>
+</div>
+</div>
+<!-- Middle: Navigation Links (Catalog is Active) -->
+<nav class="flex items-center gap-md mx-md">
+<a class="text-deep-pine font-bold border-b-2 border-sage-green pb-1 font-headline-sm text-headline-sm transition-colors" href="#">Catalog</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors" href="#">Reservations</a>
+<a class="text-dusty-rose font-body-md hover:text-teal-blue transition-colors relative" href="#">
+                Overdue
+                <span class="absolute -top-1 -right-2 w-2 h-2 bg-error rounded-full"></span>
+</a>
+</nav>
+<!-- Right: Actions -->
+<div class="flex items-center gap-sm">
+<button class="p-2 text-deep-pine hover:bg-dusty-rose/10 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-sage-green rounded-full border border-soft-parchment"></span>
+</button>
+<button class="p-2 text-deep-pine hover:bg-dusty-rose/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-px bg-dusty-rose/20 mx-xs"></div>
+<button class="bg-teal-blue text-white font-label-md text-label-md py-1.5 px-3 rounded lg flex items-center gap-xs hover:bg-deep-pine transition-colors">
+                Action Hub
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-[72px] p-lg flex gap-gutter max-w-container-max mx-auto min-h-[calc(100vh-72px)]">
+<!-- Advanced Filter Sidebar (Tactile, Structured) -->
+<aside class="w-72 flex-shrink-0 flex flex-col gap-md">
+<div class="bg-surface border border-dusty-rose/20 rounded-xl p-md shadow-[0_2px_8px_rgba(124,108,119,0.05)]">
+<div class="flex items-center justify-between mb-sm border-b border-dusty-rose/10 pb-sm">
+<h2 class="font-headline-sm text-headline-sm text-deep-pine flex items-center gap-xs">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+                        Filters
+                    </h2>
+<button class="text-dusty-rose font-label-md text-label-md hover:text-teal-blue">Reset</button>
+</div>
+<!-- Filter Group: Availability -->
+<div class="mb-md">
+<h3 class="font-label-lg text-label-lg text-on-surface-variant mb-xs">Availability</h3>
+<div class="flex flex-col gap-xs mt-2">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-radio text-sage-green border-dusty-rose focus:ring-sage-green" name="availability" type="radio"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">All Books</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-sage-green border-dusty-rose focus:ring-sage-green" name="availability" type="radio"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Available Now</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-radio text-sage-green border-dusty-rose focus:ring-sage-green" name="availability" type="radio"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Currently Borrowed</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Genre -->
+<div class="mb-md">
+<h3 class="font-label-lg text-label-lg text-on-surface-variant mb-xs">Genre</h3>
+<div class="relative mb-2">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-[18px] text-dusty-rose">search</span>
+<input class="w-full pl-8 pr-2 py-1 bg-surface-container-low border border-dusty-rose/20 rounded font-body-sm text-body-sm focus:border-teal-blue focus:ring-1 focus:ring-teal-blue outline-none" placeholder="Find genre..." type="text"/>
+</div>
+<div class="flex flex-col gap-xs max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-checkbox text-sage-green border-dusty-rose rounded-sm focus:ring-sage-green" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Computer Science</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-sage-green border-dusty-rose rounded-sm focus:ring-sage-green" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Historical Fiction</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-sage-green border-dusty-rose rounded-sm focus:ring-sage-green" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Philosophy</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="form-checkbox text-sage-green border-dusty-rose rounded-sm focus:ring-sage-green" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Data Structures</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="form-checkbox text-sage-green border-dusty-rose rounded-sm focus:ring-sage-green" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-deep-pine group-hover:text-teal-blue">Architecture</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Author -->
+<div class="mb-md">
+<h3 class="font-label-lg text-label-lg text-on-surface-variant mb-xs">Author</h3>
+<input class="w-full px-3 py-1.5 bg-surface-container-low border border-dusty-rose/20 rounded font-body-sm text-body-sm focus:border-teal-blue focus:ring-1 focus:ring-teal-blue outline-none" placeholder="e.g. Knuth, D." type="text"/>
+</div>
+<!-- Filter Group: ISBN -->
+<div>
+<h3 class="font-label-lg text-label-lg text-on-surface-variant mb-xs">Exact ISBN</h3>
+<input class="w-full px-3 py-1.5 bg-surface-container-low border border-dusty-rose/20 rounded font-body-sm text-body-sm focus:border-teal-blue focus:ring-1 focus:ring-teal-blue outline-none font-mono text-[13px]" placeholder="XXX-X-XXXX-XXXX-X" type="text"/>
+</div>
+</div>
+<button class="w-full border border-teal-blue text-teal-blue font-label-lg text-label-lg py-sm rounded-lg hover:bg-teal-blue/5 transition-colors">
+                Apply Advanced Filters
+            </button>
+</aside>
+<!-- Book Grid Area -->
+<div class="flex-1 flex flex-col">
+<!-- Grid Header -->
+<div class="flex justify-between items-end mb-md">
+<div>
+<h2 class="font-headline-md text-headline-md text-deep-pine font-bold">Catalog Results</h2>
+<p class="font-body-sm text-body-sm text-dusty-rose mt-1">Showing 1-9 of 2,401 scholarly works</p>
+</div>
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-label-md text-dusty-rose">Sort by:</span>
+<select class="bg-surface border border-dusty-rose/30 rounded px-2 py-1 font-body-sm text-body-sm text-deep-pine outline-none focus:border-teal-blue">
+<option>Relevance</option>
+<option>Title (A-Z)</option>
+<option>Date Added (Newest)</option>
+</select>
+</div>
+</div>
+<!-- Bento-style Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md mb-xl">
+<!-- Card 1: Available -->
+<div class="bg-surface border border-dusty-rose/20 rounded-xl overflow-hidden flex flex-col group hover:shadow-[0_8px_24px_rgba(34,49,39,0.08)] transition-all duration-300">
+<div class="h-48 bg-surface-container-low relative overflow-hidden border-b border-dusty-rose/10">
+<img alt="Algorithms Text" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" data-alt="A thick, scholarly textbook with a minimalist, geometric cover design resting on a wooden library table. Soft, natural light illuminates the textured paper jacket. The aesthetic is academic, quiet, and grounded in a muted color palette of deep greens and creams." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOCoM37e9q_RQkW0RCR4TaoWjGgQu9Bjj4wlmLKAEa8aWKLgSqCy0zYPq8ROF2OvoBpwA_XeYb6in9sIwIGUzTIm3LpQvUEUBYv9ISrUcC4uo3s9EsinSkRTEvm9Tbb3jpXbho2XL4GJxJBV4H7Whhzw8LLP5BAlNEfp5Ps3EoZkAXJplFog52JCUcXdfKqz8PZ-tPa3MVYspLhvTxf51rtcVA_NeddQnfl39L5Qxn49ipWzcauKUZBMqtZzVx7xsLFE8e-CMdLPA"/>
+<div class="absolute top-sm right-sm bg-surface/90 backdrop-blur border border-sage-green/30 text-secondary-fixed-dim font-label-md text-label-md px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim"></span> Available
+                        </div>
+</div>
+<div class="p-md flex-1 flex flex-col">
+<div class="font-label-md text-label-md text-teal-blue mb-1 uppercase tracking-wider">Computer Science</div>
+<h3 class="font-headline-sm text-headline-sm text-deep-pine leading-tight mb-1">The Art of Computer Programming, Vol. 1</h3>
+<p class="font-body-sm text-body-sm text-dusty-rose mb-xs">Donald E. Knuth</p>
+<p class="font-mono text-[11px] text-on-surface-variant/70 mb-md mt-auto pt-2 border-t border-dusty-rose/10">ISBN: 978-0201896831</p>
+<button class="w-full bg-sage-green text-primary font-label-md text-label-md py-2 rounded flex justify-center items-center gap-2 hover:bg-[#5da577] transition-colors">
+<span class="material-symbols-outlined text-[18px]">bookmark_add</span>
+                            Borrow
+                        </button>
+</div>
+</div>
+<!-- Card 2: Borrowed -->
+<div class="bg-surface border border-dusty-rose/20 rounded-xl overflow-hidden flex flex-col group hover:shadow-[0_8px_24px_rgba(34,49,39,0.08)] transition-all duration-300 opacity-90">
+<div class="h-48 bg-surface-container-low relative overflow-hidden border-b border-dusty-rose/10">
+<img alt="Philosophy Book" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 grayscale-[20%]" data-alt="An open antique philosophy book with yellowed parchment pages, resting on a dark pine desk. A soft, warm light from a nearby reading lamp highlights the classic typography. The mood is historic, scholarly, and deeply textured." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSqOJ-q10QHihXxzCMLB85cYrEt44FhidW6V92uCFDGMbdMvwL1k8zie8e-neEah_mtGA1XirFrRdG5Cgib_RqQaHb4hPmlQd50ABRbi0AF125zjhvbwoIJNTHAHaOccLU86_Q0R38fshvuUUP_XTNLFAKD3SxEuDbxFAycySxeu1C5wcVObLO02V1rLicSojx-NVKTAzZQwTfSjNxxYRCw0s2CVLBkvI0VR-Gph2aTh6wmfr2rV9UVXz6FEou14rsnsYIDP2-XjQ"/>
+<div class="absolute top-sm right-sm bg-surface/90 backdrop-blur border border-dusty-rose/30 text-dusty-rose font-label-md text-label-md px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-dusty-rose"></span> Borrowed
+                        </div>
+</div>
+<div class="p-md flex-1 flex flex-col">
+<div class="font-label-md text-label-md text-teal-blue mb-1 uppercase tracking-wider">Philosophy</div>
+<h3 class="font-headline-sm text-headline-sm text-deep-pine leading-tight mb-1">Critique of Pure Reason</h3>
+<p class="font-body-sm text-body-sm text-dusty-rose mb-xs">Immanuel Kant</p>
+<p class="font-mono text-[11px] text-on-surface-variant/70 mb-md mt-auto pt-2 border-t border-dusty-rose/10">ISBN: 978-0140447477</p>
+<button class="w-full bg-surface-container-high text-dusty-rose font-label-md text-label-md py-2 rounded flex justify-center items-center gap-2 cursor-not-allowed border border-dusty-rose/20">
+<span class="material-symbols-outlined text-[18px]">calendar_clock</span>
+                            Due in 4 days
+                        </button>
+</div>
+</div>
+<!-- Card 3: Available -->
+<div class="bg-surface border border-dusty-rose/20 rounded-xl overflow-hidden flex flex-col group hover:shadow-[0_8px_24px_rgba(34,49,39,0.08)] transition-all duration-300">
+<div class="h-48 bg-surface-container-low relative overflow-hidden border-b border-dusty-rose/10">
+<img alt="Architecture Volume" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" data-alt="A row of heavy, fabric-bound architecture journals on a library shelf. The focus is sharp on the textured spine of the middle volume. The lighting is diffused, emphasizing the tactile quality of the bindings in a setting of academic permanence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_u-4ie0KdXR4_-sCzSHfqL9BewE0cnY73LgdM9gFtef2qV6rMf7p7PEhz-HIh6BHB5UlDKnNmzBwg4XEPpKsGIjvmokH0Z6QfRsWtG0hfIpt2lO0zBLLBS1RhrIFomkqM5mE9NTEgt5UhHYH1FCp2D7TRVeu9k9XyVYOYYSNTjAOXdIcAT1ncdD04puZ69m4dqDTk3tX8V0eT_Amf2_h7f-m8pkTi_1Vyy7TDuldZ_ZDOkMlIzejH5rUPgmniozK-929435FaQTM"/>
+<div class="absolute top-sm right-sm bg-surface/90 backdrop-blur border border-sage-green/30 text-secondary-fixed-dim font-label-md text-label-md px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed-dim"></span> Available
+                        </div>
+</div>
+<div class="p-md flex-1 flex flex-col">
+<div class="font-label-md text-label-md text-teal-blue mb-1 uppercase tracking-wider">Architecture</div>
+<h3 class="font-headline-sm text-headline-sm text-deep-pine leading-tight mb-1">A Pattern Language</h3>
+<p class="font-body-sm text-body-sm text-dusty-rose mb-xs">Christopher Alexander</p>
+<p class="font-mono text-[11px] text-on-surface-variant/70 mb-md mt-auto pt-2 border-t border-dusty-rose/10">ISBN: 978-0195019193</p>
+<button class="w-full bg-sage-green text-primary font-label-md text-label-md py-2 rounded flex justify-center items-center gap-2 hover:bg-[#5da577] transition-colors">
+<span class="material-symbols-outlined text-[18px]">bookmark_add</span>
+                            Borrow
+                        </button>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-auto flex justify-center items-center gap-2 border-t border-dusty-rose/20 pt-md">
+<button class="w-8 h-8 flex items-center justify-center rounded text-dusty-rose hover:bg-surface-container-high transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-deep-pine text-soft-parchment font-label-md text-label-md shadow-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded text-deep-pine hover:bg-surface-container-high transition-colors font-label-md text-label-md">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded text-deep-pine hover:bg-surface-container-high transition-colors font-label-md text-label-md">3</button>
+<span class="text-dusty-rose px-1">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded text-deep-pine hover:bg-surface-container-high transition-colors font-label-md text-label-md">24</button>
+<button class="w-8 h-8 flex items-center justify-center rounded text-deep-pine hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+</body></html>

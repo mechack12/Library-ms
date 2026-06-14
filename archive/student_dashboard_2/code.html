@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scholarly Archive - Student Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;500;600;700&amp;family=Source+Sans+3:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "error-container": "#ffdad6",
+                "on-secondary": "#ffffff",
+                "secondary-fixed": "#d8e2ff",
+                "surface-container-lowest": "#ffffff",
+                "surface-bright": "#f7f9ff",
+                "error": "#ba1a1a",
+                "outline": "#777586",
+                "on-secondary-fixed-variant": "#004494",
+                "surface-dim": "#d7dae0",
+                "on-tertiary": "#ffffff",
+                "background": "#f7f9ff",
+                "on-background": "#181c20",
+                "on-primary-fixed": "#09006b",
+                "on-primary-fixed-variant": "#312ebc",
+                "on-tertiary-container": "#40b25c",
+                "surface-container-high": "#e5e8ee",
+                "on-surface-variant": "#464554",
+                "tertiary": "#00260a",
+                "inverse-surface": "#2d3135",
+                "on-secondary-container": "#00285c",
+                "on-tertiary-fixed-variant": "#005320",
+                "on-primary": "#ffffff",
+                "inverse-primary": "#c1c1ff",
+                "surface": "#f7f9ff",
+                "on-error-container": "#93000a",
+                "primary": "#0b0076",
+                "primary-fixed-dim": "#c1c1ff",
+                "primary-container": "#1a0dab",
+                "on-error": "#ffffff",
+                "inverse-on-surface": "#eef1f7",
+                "surface-tint": "#4b4bd4",
+                "on-primary-container": "#9091ff",
+                "surface-container": "#ebeef4",
+                "tertiary-fixed": "#89fa9b",
+                "secondary-container": "#4d8efe",
+                "secondary": "#005ac1",
+                "outline-variant": "#c7c4d7",
+                "on-surface": "#181c20",
+                "tertiary-container": "#003e16",
+                "on-tertiary-fixed": "#002108",
+                "surface-variant": "#dfe3e9",
+                "surface-container-highest": "#dfe3e9",
+                "surface-container-low": "#f1f4fa",
+                "tertiary-fixed-dim": "#6ddd81",
+                "secondary-fixed-dim": "#adc6ff",
+                "primary-fixed": "#e1dfff",
+                "on-secondary-fixed": "#001a41"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "unit": "4px",
+                "margin-mobile": "16px",
+                "container-max-width": "1280px",
+                "gutter": "24px",
+                "margin-desktop": "60px",
+                "stack-spacing-md": "16px",
+                "stack-spacing-sm": "8px",
+                "stack-spacing-lg": "32px"
+        },
+        "fontFamily": {
+                "headline-md": [
+                        "Roboto Flex"
+                ],
+                "headline-lg": [
+                        "Roboto Flex"
+                ],
+                "body-sm": [
+                        "Source Sans 3"
+                ],
+                "link-title": [
+                        "Roboto Flex"
+                ],
+                "label-md": [
+                        "Source Sans 3"
+                ],
+                "body-lg": [
+                        "Source Sans 3"
+                ],
+                "body-md": [
+                        "Source Sans 3"
+                ]
+        },
+        "fontSize": {
+                "headline-md": [
+                        "20px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-sm": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "link-title": [
+                        "20px",
+                        {
+                                "lineHeight": "26px",
+                                "letterSpacing": "0.2px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "22px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant h-screen w-64 fixed left-0 top-0 shadow-xl flex flex-col h-full p-4 z-20">
+<div class="mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">Scholarly Archive</h1>
+<p class="font-body-sm text-body-sm text-primary mt-1">Student Portal</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="bg-primary-container text-on-primary-container px-4 py-3 rounded-lg flex items-center gap-3 transition-colors scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-label-md text-label-md">Transactions</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Students</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Categories</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg mb-4 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+                Borrow/Return
+            </button>
+<nav class="space-y-2">
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low px-4 py-3 rounded-lg flex items-center gap-3 transition-colors hover:text-primary" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Logout</span>
+</a>
+</nav>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant docked full-width top-0 sticky z-10">
+<div class="flex justify-between items-center px-6 py-3 h-16 w-full">
+<!-- Search Bar (on_left as per JSON, but leaving space for potential brand if needed, though side nav has it) -->
+<div class="flex-1 max-w-xl relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-2 pl-10 pr-4 text-body-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow" placeholder="Search catalog, authors, ISBN..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-6 mx-8">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-link-title text-link-title" href="#">Catalog</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors" href="#">Reservations</a>
+<a class="text-on-surface-variant font-body-md hover:text-primary transition-colors" href="#">Overdue</a>
+</nav>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="bg-primary text-on-primary font-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity ml-2">Action Hub</button>
+<div class="w-10 h-10 rounded-full overflow-hidden ml-4 border border-outline-variant">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A close-up studio portrait of a young male student looking directly at the camera with a neutral, friendly expression. He is wearing a simple casual shirt. The lighting is soft and even, highlighting natural skin tones against a clean, minimal white background. The image has a modern, professional, yet approachable feel suitable for a digital profile picture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEXr1W0WZRYYX1_d5VNilUEV8O7w83r37IgZPCgwzMR3Feq_ajHRehOLFjqaTqRN8W6qwmvJQNY7BRZ9JYGUzf8ts1_WiIRvJ69C7nwNw4mXW3_NvqKvpz20wvnIINE4pNc6k9KNkdbvmLb4usdDxQvBQ-lGE9QP8WxLHQbYgzkz0uniuWY0mXlWhliPn5mUyy1i1Xsn0InSuHGRTeOlrCSwsUx1P2dc7J4HIf6Yc3zcZdwNk0KMmLyAQlctWvAVNV4je2RrSUXIQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-container-max-width mx-auto space-y-8">
+<!-- Welcome Section -->
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Welcome back, Alex.</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2">Here is your academic reading overview.</p>
+</div>
+<!-- Dynamic Dashboard (Bento Grid) -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Borrowed Books Visual Summary (Spans 8 cols) -->
+<div class="md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+<div class="flex justify-between items-start mb-6 relative z-10">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Current Loans</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">3 items due within 14 days</p>
+</div>
+<span class="bg-surface-container-low text-on-surface font-label-md px-3 py-1 rounded-full border border-outline-variant">4 / 10 Quota Used</span>
+</div>
+<div class="flex-1 flex items-end gap-2 relative z-10">
+<!-- Book Visualizer Bars -->
+<div class="w-full bg-surface-variant h-3 rounded-full overflow-hidden flex">
+<div class="bg-primary h-full" style="width: 40%;"></div>
+<div class="bg-surface-variant h-full flex-1"></div>
+</div>
+</div>
+<div class="flex justify-between mt-2 text-label-md text-on-surface-variant relative z-10">
+<span>0</span>
+<span>Library Capacity Limit (10)</span>
+</div>
+</div>
+<!-- Overdue Alert (Spans 4 cols) -->
+<div class="md:col-span-4 bg-error-container border border-error/20 rounded-xl p-6 flex flex-col justify-center">
+<div class="flex items-center gap-3 mb-4 text-error">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h3 class="font-headline-md text-headline-md">Action Required</h3>
+</div>
+<p class="font-body-md text-body-md text-on-error-container mb-6">"Advanced Data Structures" is overdue by 2 days.</p>
+<button class="bg-error text-on-error font-label-md py-2 rounded-lg hover:opacity-90 transition-opacity w-full">Renew Now</button>
+</div>
+</section>
+<!-- Action Hub Section -->
+<section>
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">Action Hub</h3>
+<a class="text-primary font-label-md hover:underline flex items-center gap-1" href="#">View All <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1: My Reservations -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+<div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+<img alt="Stack of books" class="w-full h-full object-cover" data-alt="A minimalist composition showing a small, neat stack of hardcover books resting on a clean, light-colored wooden desk. The lighting is soft and diffused, casting gentle shadows that suggest a quiet, scholarly environment. The color palette is muted, featuring earthy tones and soft warm light that perfectly aligns with a modern, tactile academic aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBuwRKkYnNahazU38G5Htaj7NO5_PTn8Et3cTnmo2TuzXc0xUjdLWuSjYvz6YnPoVqGTFk2NPjw4sgi-l0xa6f9swtcZaLdCU5ScbUuHJZ6EG38DHct8Zqv6sZmjB2m-U79pojM0rl9jaug45OwMY2p6RbzchgGkaVDhpKdE7U74Cs4I4ao49orHC6hS6S4cxioxjxeIkjvATJTKSPqChF8gYaGph4-yReNtU-ib1n7QY54Jm7I2NRky-l7pyp-uS-ayRFwz5-r3o"/>
+<span class="absolute top-2 right-2 bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-label-md px-2 py-1 rounded text-xs">Ready</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-1">My Reservations</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">"Principles of Physics" is ready for pickup at Desk A.</p>
+<button class="w-full border border-primary text-primary font-label-md py-2 rounded-lg hover:bg-primary/5 transition-colors">Show QR Code</button>
+</div>
+<!-- Card 2: Recommended -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+<div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+<img alt="Library shelf" class="w-full h-full object-cover" data-alt="A beautifully lit close-up of a wooden library shelf filled with slightly worn, scholarly books. The depth of field is shallow, blurring the books in the background while keeping the textured spines in the foreground sharp. The color palette is warm, utilizing deep pines, soft parchments, and dusty roses, evoking a rich, tactile, and reliable academic atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_FdJWfvmlMIVET6U3xKuDHJzHxlzzBIYQXM5exkofsgWW6-zWOCK3hZwQbYQNFPvNSWMcq292cnOHHkZqs-vubYx87wf81Lx2R7DBLNLWHYLsV99kWd0EKBkPJQT-gnvYPksmc1qYOXNUUWjkVayIpkCVkPDJmlShl_RPNDCGfwXjGvmqzDwYqcLPmtbkgVgIAX5nHvowPafTXXUcolV4Cn77zp191pcwo7BKrYDrfY3h-0n_ElOJtWWZ8nSy1tpIZQmWPKu0b20"/>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-1">Recommended for You</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">Based on your interest in algorithmic design.</p>
+<button class="w-full bg-primary text-on-primary font-label-md py-2 rounded-lg hover:bg-opacity-90 transition-opacity">Explore List</button>
+</div>
+<!-- Card 3: Recent Arrivals -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+<div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+<img alt="New books on display" class="w-full h-full object-cover" data-alt="A modern, well-lit display table in a contemporary library showing a few newly arrived academic textbooks. The books are standing upright with sleek, minimalist cover designs. The surrounding space is clean, airy, and bathed in bright, natural light, reflecting a modern scholarly environment with subtle hints of sage green and warm parchment tones in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBooi89eGhDNM0OVPOm4NObIBasYv2koMwthXTXGZ3DrygDatTxIADZnAM5U_33bpvtyQ9w0dCIUWCqO2BSfH0Ix7a_b8P2dVUxKRpCyE3i9jaK5J51wpbLkxYtUSF-GVrw2aaurIGs1c2dZcoBcNPQfQWvCoI1rgnyIoAkR4HYiaGDGKGZHrJ7yB-KD0RZMhZ89YY_4JIRG0idc1FMBw1BHMxwxl2H2nIM8uUj9rrQMgLpc_f53PmzmI8KAth0G09W2aks8htlauc"/>
+<span class="absolute top-2 right-2 bg-primary text-on-primary font-label-md px-2 py-1 rounded text-xs">New</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-1">Recent Arrivals</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">Explore 42 new titles added to the Computer Science section.</p>
+<button class="w-full border border-outline-variant text-on-surface-variant font-label-md py-2 rounded-lg hover:bg-surface-container-low transition-colors">Browse</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

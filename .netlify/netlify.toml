@@ -1,0 +1,26 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\Users\\user\\Downloads\\test\\stitch_scholastic_library_hub"
+publishOrigin = "default"
+base = "C:\\Users\\user\\Downloads\\test\\stitch_scholastic_library_hub"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]

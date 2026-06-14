@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Categories - Scholarly Archive</title>
+<link href="../assets/css/tailwind.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/notifications.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased flex">
+
+<aside id="app-sidebar"></aside>
+
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<header class="bg-soft-parchment border-b border-dusty-rose/20 sticky top-0 z-10">
+    <div class="flex justify-between items-center px-lg py-sm h-16">
+        <h2 class="font-headline-md text-deep-pine font-bold">Book Categories</h2>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-2 text-dusty-rose text-[18px]">search</span>
+                <input id="cat-search" type="text" placeholder="Search categories..." class="pl-9 pr-4 py-2 bg-white border border-dusty-rose/30 rounded-lg text-sm focus:outline-none focus:border-teal-blue" oninput="renderCategories(this.value)">
+            </div>
+            <button class="text-dusty-rose hover:text-teal-blue transition-colors p-2 rounded-full hover:bg-dusty-rose/10">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <div class="w-9 h-9 rounded-full overflow-hidden border border-dusty-rose/20">
+                <img id="user-avatar" alt="Avatar" class="w-full h-full object-cover" src="https://via.placeholder.com/150"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 p-xl">
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-3 gap-md mb-8">
+            <div class="bg-white rounded-xl p-md border border-dusty-rose/20 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-deep-pine/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-deep-pine text-[24px]">category</span>
+                </div>
+                <div>
+                    <p class="text-dusty-rose text-xs font-label-md">Total Categories</p>
+                    <p id="stat-total" class="text-2xl font-bold text-deep-pine">—</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-md border border-dusty-rose/20 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-teal-blue/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-teal-blue text-[24px]">menu_book</span>
+                </div>
+                <div>
+                    <p class="text-dusty-rose text-xs font-label-md">Total Books Tagged</p>
+                    <p id="stat-books" class="text-2xl font-bold text-deep-pine">—</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-md border border-dusty-rose/20 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-sage-green/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sage-green text-[24px]">star</span>
+                </div>
+                <div>
+                    <p class="text-dusty-rose text-xs font-label-md">Most Popular</p>
+                    <p id="stat-popular" class="text-sm font-bold text-deep-pine truncate">—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Grid -->
+        <div class="bg-white border border-dusty-rose/20 rounded-xl overflow-hidden shadow-sm">
+            <div class="px-md py-4 border-b border-dusty-rose/10 flex justify-between items-center">
+                <h3 class="font-headline-sm text-deep-pine font-semibold">All Categories</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="openAddCategoryModal()" class="bg-deep-pine hover:bg-opacity-90 text-white px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
+                        <span class="material-symbols-outlined text-[16px]">add</span> Add Category
+                    </button>
+                    <span id="cat-count" class="text-dusty-rose font-label-md text-xs">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Header Row -->
+            <div class="grid grid-cols-5 px-md py-2 bg-surface-container-low text-xs font-semibold text-dusty-rose border-b border-dusty-rose/10">
+                <div class="col-span-2">Category Name</div>
+                <div class="text-center">Books</div>
+                <div class="text-center">Description</div>
+                <div class="text-right">Actions</div>
+            </div>
+
+            <!-- Category List -->
+            <div id="cat-list">
+                <div class="py-12 text-center text-dusty-rose">
+                    <span class="material-symbols-outlined text-[40px] animate-spin block mb-2">sync</span>
+                    Loading categories...
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+</div>
+
+<!-- Add Category Modal -->
+<div id="add-cat-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 overflow-hidden">
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">add_circle</span> Add New Category
+            </h2>
+            <button onclick="closeAddCategoryModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="add-cat-form" class="p-lg flex flex-col gap-md" onsubmit="event.preventDefault(); submitAddCategory();">
+            <div id="add-cat-status" class="hidden mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-cat-name">Category Name *</label>
+                <input id="add-cat-name" type="text" required placeholder="e.g. Science Fiction" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-cat-desc">Description</label>
+                <textarea id="add-cat-desc" rows="3" placeholder="Brief description of this category..." class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow resize-none"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 border-t border-dusty-rose/20 pt-4">
+                <button type="button" onclick="closeAddCategoryModal()" class="px-4 py-2 text-dusty-rose font-label-lg hover:bg-dusty-rose/10 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" id="btn-add-cat" class="px-6 py-2 bg-deep-pine hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">add</span> Add Category
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="edit-cat-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 overflow-hidden">
+        <div class="bg-soft-parchment p-md flex justify-between items-center border-b border-dusty-rose/20">
+            <h2 class="font-headline-md text-headline-md text-deep-pine font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">edit</span> Edit Category
+            </h2>
+            <button onclick="closeEditCategoryModal()" class="text-dusty-rose hover:text-deep-pine p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="edit-cat-form" class="p-lg flex flex-col gap-md" onsubmit="event.preventDefault(); submitEditCategory();">
+            <input type="hidden" id="edit-cat-id">
+            <div id="edit-cat-status" class="hidden mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center"></div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="edit-cat-name">Category Name *</label>
+                <input id="edit-cat-name" type="text" required class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+            </div>
+            <div class="flex flex-col gap-xs">
+                <label class="font-label-md text-label-md text-deep-pine" for="edit-cat-desc">Description</label>
+                <textarea id="edit-cat-desc" rows="3" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow resize-none"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 border-t border-dusty-rose/20 pt-4">
+                <button type="button" onclick="closeEditCategoryModal()" class="px-4 py-2 text-dusty-rose font-label-lg hover:bg-dusty-rose/10 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" id="btn-save-cat" class="px-6 py-2 bg-deep-pine hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let allCategories = [];
+
+async function init() {
+    await window.initNav();
+    await window.initNotifications();
+    await loadCategories();
+}
+
+async function loadCategories() {
+    const list = document.getElementById('cat-list');
+    list.innerHTML = `<div class="py-12 text-center text-dusty-rose"><span class="material-symbols-outlined text-[40px] block mb-2">sync</span>Loading...</div>`;
+
+    try {
+        // Fetch categories + count of books in each
+        const { data: cats, error } = await window.sbClient
+            .from('categories')
+            .select('*, books(count)')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+
+        allCategories = cats || [];
+        updateStats();
+        renderCategories('');
+    } catch (err) {
+        console.error(err);
+        list.innerHTML = `<div class="py-12 text-center text-dusty-rose"><span class="material-symbols-outlined text-[40px] block mb-2">error</span>Failed to load: ${err.message}<br><small>Make sure you have a "categories" table in Supabase.</small></div>`;
+    }
+}
+
+function updateStats() {
+    const total = allCategories.length;
+    const totalBooks = allCategories.reduce((sum, c) => sum + (c.books?.[0]?.count || 0), 0);
+    const popular = allCategories.sort((a, b) => (b.books?.[0]?.count || 0) - (a.books?.[0]?.count || 0))[0];
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-books').textContent = totalBooks;
+    document.getElementById('stat-popular').textContent = popular ? popular.name : '—';
+
+    // Re-sort alphabetically for rendering
+    allCategories.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderCategories(query) {
+    const list = document.getElementById('cat-list');
+    const q = (query || '').toLowerCase();
+    const filtered = allCategories.filter(c => !q || c.name.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q));
+
+    document.getElementById('cat-count').textContent = `${filtered.length} categor${filtered.length !== 1 ? 'ies' : 'y'}`;
+
+    if (!filtered.length) {
+        list.innerHTML = `<div class="py-12 text-center text-dusty-rose"><span class="material-symbols-outlined text-[40px] block mb-2">search_off</span>No categories found.</div>`;
+        return;
+    }
+
+    const icons = ['auto_stories', 'science', 'history_edu', 'psychology', 'computer', 'biotech', 'public', 'sports_soccer', 'music_note', 'palette', 'gavel', 'calculate'];
+    const colors = ['bg-teal-blue/10 text-teal-blue', 'bg-sage-green/10 text-sage-green', 'bg-deep-pine/10 text-deep-pine', 'bg-dusty-rose/10 text-dusty-rose'];
+
+    list.innerHTML = filtered.map((c, i) => {
+        const bookCount = c.books?.[0]?.count || 0;
+        const icon = icons[i % icons.length];
+        const colorClass = colors[i % colors.length];
+        const desc = c.description ? (c.description.length > 50 ? c.description.slice(0, 50) + '...' : c.description) : '—';
+
+        return `
+        <div class="grid grid-cols-5 px-md py-3 items-center text-sm hover:bg-surface-container-low transition-colors border-b border-dusty-rose/5 last:border-0">
+            <div class="col-span-2 flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">${icon}</span>
+                </div>
+                <p class="font-medium text-deep-pine">${c.name}</p>
+            </div>
+            <div class="text-center">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${bookCount > 0 ? 'bg-teal-blue/10 text-teal-blue' : 'bg-dusty-rose/10 text-dusty-rose'}">
+                    <span class="material-symbols-outlined text-[14px]">menu_book</span>
+                    ${bookCount}
+                </span>
+            </div>
+            <div class="text-dusty-rose text-xs px-2">${desc}</div>
+            <div class="flex items-center justify-end gap-2">
+                <button onclick="openEditCategoryModal('${c.id}')" class="p-1 rounded-md text-teal-blue hover:bg-teal-blue/10 transition-colors" title="Edit">
+                    <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                <button onclick="deleteCategory('${c.id}', '${(c.name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-error hover:bg-error/10 transition-colors" title="Delete">
+                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Add Category ──────────────────────────────────────────────────────────────
+function openAddCategoryModal() {
+    document.getElementById('add-cat-form').reset();
+    document.getElementById('add-cat-status').classList.add('hidden');
+    const modal = document.getElementById('add-cat-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeAddCategoryModal() {
+    const modal = document.getElementById('add-cat-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+async function submitAddCategory() {
+    const name = document.getElementById('add-cat-name').value.trim();
+    const desc = document.getElementById('add-cat-desc').value.trim();
+    const btn = document.getElementById('btn-add-cat');
+    const statusMsg = document.getElementById('add-cat-status');
+
+    if (!name) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Adding...';
+    statusMsg.classList.add('hidden');
+
+    try {
+        const { data, error } = await window.sbClient
+            .from('categories')
+            .insert([{ name, description: desc || null }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        allCategories.push({ ...data, books: [{ count: 0 }] });
+        allCategories.sort((a, b) => a.name.localeCompare(b.name));
+        updateStats();
+        renderCategories(document.getElementById('cat-search').value);
+        closeAddCategoryModal();
+    } catch (err) {
+        statusMsg.textContent = 'Error: ' + err.message;
+        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
+        statusMsg.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">add</span> Add Category';
+    }
+}
+
+// ── Edit Category ─────────────────────────────────────────────────────────────
+function openEditCategoryModal(id) {
+    const cat = allCategories.find(c => c.id == id);
+    if (!cat) return;
+    document.getElementById('edit-cat-id').value = cat.id;
+    document.getElementById('edit-cat-name').value = cat.name;
+    document.getElementById('edit-cat-desc').value = cat.description || '';
+    document.getElementById('edit-cat-status').classList.add('hidden');
+    const modal = document.getElementById('edit-cat-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function closeEditCategoryModal() {
+    const modal = document.getElementById('edit-cat-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+async function submitEditCategory() {
+    const id = document.getElementById('edit-cat-id').value;
+    const name = document.getElementById('edit-cat-name').value.trim();
+    const desc = document.getElementById('edit-cat-desc').value.trim();
+    const btn = document.getElementById('btn-save-cat');
+    const statusMsg = document.getElementById('edit-cat-status');
+
+    if (!name) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Saving...';
+    statusMsg.classList.add('hidden');
+
+    try {
+        const { error } = await window.sbClient
+            .from('categories')
+            .update({ name, description: desc || null })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        const idx = allCategories.findIndex(c => c.id == id);
+        if (idx !== -1) {
+            allCategories[idx].name = name;
+            allCategories[idx].description = desc;
+        }
+        allCategories.sort((a, b) => a.name.localeCompare(b.name));
+        updateStats();
+        renderCategories(document.getElementById('cat-search').value);
+        closeEditCategoryModal();
+    } catch (err) {
+        statusMsg.textContent = 'Error: ' + err.message;
+        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
+        statusMsg.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">save</span> Save Changes';
+    }
+}
+
+// ── Delete Category ───────────────────────────────────────────────────────────
+async function deleteCategory(id, name) {
+    if (!confirm(`Delete category "${name}"?\n\nBooks in this category will become uncategorized.`)) return;
+
+    try {
+        const { error } = await window.sbClient
+            .from('categories')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        allCategories = allCategories.filter(c => c.id != id);
+        updateStats();
+        renderCategories(document.getElementById('cat-search').value);
+    } catch (err) {
+        alert('Failed to delete: ' + err.message);
+    }
+}
+
+// Close modals on backdrop click
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'add-cat-modal') closeAddCategoryModal();
+    if (e.target.id === 'edit-cat-modal') closeEditCategoryModal();
+});
+
+init();
+</script>
+</body></html>
