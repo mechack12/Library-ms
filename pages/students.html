@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
 </head>
-<body class="bg-background text-on-background font-body-md antialiased flex">
+<body class="bg-soft-parchment text-deep-pine font-body-md antialiased flex">
 
 <aside id="app-sidebar"></aside>
 
@@ -44,7 +44,7 @@
             <div class="px-md py-4 border-b border-dusty-rose/10 flex justify-between items-center">
                 <h3 class="font-headline-sm text-deep-pine font-semibold">Registered Students</h3>
                 <div class="flex items-center gap-3">
-                    <button onclick="openAddStudentModal()" class="bg-deep-pine hover:bg-opacity-90 text-white px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
+                    <button onclick="openAddStudentModal()" class="bg-sage-green hover:bg-sage-green/90 text-deep-pine font-semibold px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
                         <span class="material-symbols-outlined text-[16px]">person_add</span> Add Student
                     </button>
                     <button onclick="openReportModal()" class="bg-teal-blue hover:bg-opacity-90 text-white px-3 py-1.5 rounded-lg font-label-md text-xs flex items-center gap-1 shadow-sm transition-all">
@@ -53,12 +53,12 @@
                     <span id="student-count" class="text-dusty-rose font-label-md text-xs">Loading...</span>
                 </div>
             </div>
-            <div class="grid grid-cols-7 px-md py-3 bg-surface-container-low text-xs font-semibold text-dusty-rose uppercase tracking-wider">
+            <div class="grid grid-cols-8 px-md py-3 bg-surface-container-low text-xs font-semibold text-dusty-rose uppercase tracking-wider">
                 <span class="col-span-2">Student</span>
                 <span>Library ID</span>
-                <span class="text-center">Active Loans</span>
-                <span class="text-center">Reservations</span>
-                <span class="text-center">Status</span>
+                <span class="col-span-2">Booked Book</span>
+                <span class="text-center">Date</span>
+                <span class="text-center">Time</span>
                 <span class="text-right">Actions</span>
             </div>
             <div id="students-list" class="divide-y divide-dusty-rose/10">
@@ -90,7 +90,7 @@
                     <p id="det-id" class="text-dusty-rose font-mono text-xs mt-1">ID: ...</p>
                     <div class="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
                         <span id="det-badge-loans" class="px-2 py-0.5 rounded font-label-md text-xs bg-teal-blue/10 text-teal-blue">0 Loans</span>
-                        <span id="det-badge-overdue" class="px-2 py-0.5 rounded font-label-md text-xs bg-red-100 text-red-800 hidden">0 Overdue</span>
+                        <span id="det-badge-overdue" class="px-2 py-0.5 rounded font-label-md text-xs bg-error-container text-on-error-container hidden">0 Overdue</span>
                         <span id="det-badge-res" class="px-2 py-0.5 rounded font-label-md text-xs bg-sage-green/10 text-sage-green">0 Reserved</span>
                     </div>
                 </div>
@@ -193,8 +193,8 @@
             </div>
 
             <div class="flex flex-col gap-xs">
-                <label class="font-label-md text-label-md text-deep-pine" for="add-user-id">Username or Email *</label>
-                <input id="add-user-id" type="text" required placeholder="janedoe or jane@example.com" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
+                <label class="font-label-md text-label-md text-deep-pine" for="add-user-id">Username *</label>
+                <input id="add-user-id" type="text" required placeholder="e.g. janedoe" class="w-full px-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-deep-pine outline-none transition-shadow">
             </div>
 
             <div class="flex flex-col gap-xs">
@@ -210,7 +210,7 @@
             
             <div class="flex justify-end gap-3 mt-4 border-t border-dusty-rose/20 pt-4">
                 <button type="button" onclick="closeAddStudentModal()" class="px-4 py-2 text-dusty-rose font-label-lg hover:bg-dusty-rose/10 rounded-lg transition-colors">Cancel</button>
-                <button type="submit" id="btn-create-student" class="px-6 py-2 bg-deep-pine hover:bg-opacity-90 text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
+                <button type="submit" id="btn-create-student" class="px-6 py-2 bg-sage-green hover:bg-sage-green/90 text-deep-pine font-semibold font-label-lg rounded-lg shadow-md transition-colors flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">person_add</span> Create Student
                 </button>
             </div>

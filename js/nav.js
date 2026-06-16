@@ -204,46 +204,283 @@ async function initNav() {
 
     if (avatarUrl) {
       topAvatar.src = avatarUrl;
+      topAvatar.classList.remove('hidden');
+      const initialsSpan = document.getElementById('user-avatar-initials');
+      if (initialsSpan) initialsSpan.classList.add('hidden');
     } else {
-      // Show initials fallback if no image is set and we're not on profile.html
-      const isProfilePage = window.location.pathname.split('/').pop() === 'profile.html';
-      if (!isProfilePage && parentContainer && parentContainer.classList.contains('rounded-full')) {
+      // Show initials fallback
+      const initialsSpan = document.getElementById('user-avatar-initials');
+      if (initialsSpan) {
         const initials = fullName.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        parentContainer.innerHTML = `<span id="user-avatar" class="text-deep-pine font-bold text-xs select-none w-full h-full flex items-center justify-center bg-sage-green/35">${initials}</span>`;
+        initialsSpan.textContent = initials;
       }
     }
   }
 
   // ── 8. Badge counts ───────────────────────────────────────────────────────
   await _navFetchBadges(role, session.user.id);
+  
+  // ── 9. Inject Header & Modals ─────────────────────────────────────────────
+  injectHeaderAndModals(role);
+}
+
+function injectHeaderAndModals(role) {
+  // Check if header placeholder exists (we'll just prepend it to the main content container if missing, 
+  // but to be safe, we look for the main flex container next to sidebar)
+  const mainContainer = document.querySelector('.flex-1.ml-64') || document.querySelector('.flex-1');
+  if (!mainContainer) return;
+  
+  // Only inject if not already present
+  if (document.getElementById('global-top-header')) return;
+
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  if (currentTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+
+  // Build the Header
+  const headerHtml = `
+  <header id="global-top-header" class="border-b border-dusty-rose/20 bg-soft-parchment dark:bg-deep-pine/90 dark:border-white/10 flex justify-between items-center px-lg py-sm w-full z-20 shrink-0 transition-colors">
+    <div class="flex items-center gap-lg">
+      <span class="font-headline-lg text-headline-lg font-bold text-deep-pine dark:text-soft-parchment hidden md:block">LMS</span>
+    </div>
+    
+    <!-- Middle: Search -->
+    <div class="flex-1 max-w-md mx-lg hidden lg:block">
+      <div class="relative flex items-center">
+        <span class="material-symbols-outlined absolute left-3 text-deep-pine dark:text-soft-parchment/70">search</span>
+        <input id="global-search" class="w-full bg-surface-container-low dark:bg-surface-dim/50 border border-dusty-rose/30 dark:border-white/20 rounded-lg py-2 pl-10 pr-4 font-body-sm text-deep-pine dark:text-soft-parchment focus:outline-none focus:border-sage-green focus:ring-1 focus:ring-sage-green transition-shadow placeholder:text-dusty-rose dark:placeholder:text-soft-parchment/50" placeholder="Search catalog, users, or ISBN..." type="text"/>
+      </div>
+    </div>
+    
+    <!-- Right Side: Actions -->
+    <div class="flex items-center gap-md">
+      ${role === 'librarian' ? `
+      <button id="btn-action-hub" class="hidden lg:flex items-center gap-xs font-label-lg text-teal-blue dark:text-sage-green hover:opacity-80 transition-opacity">
+        Action Hub
+      </button>
+      ` : ''}
+      <div class="flex items-center gap-sm">
+        <button id="btn-theme-toggle" class="p-2 text-deep-pine dark:text-soft-parchment hover:text-teal-blue dark:hover:text-sage-green transition-colors rounded-full hover:bg-dusty-rose/10 dark:hover:bg-white/10">
+          <span class="material-symbols-outlined">${currentTheme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+        </button>
+        <button class="p-2 text-deep-pine dark:text-soft-parchment hover:text-teal-blue dark:hover:text-sage-green transition-colors rounded-full hover:bg-dusty-rose/10 dark:hover:bg-white/10 relative">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+        <button id="btn-global-help" class="p-2 text-deep-pine dark:text-soft-parchment hover:text-teal-blue dark:hover:text-sage-green transition-colors rounded-full hover:bg-dusty-rose/10 dark:hover:bg-white/10">
+          <span class="material-symbols-outlined">help_outline</span>
+        </button>
+      </div>
+      <div id="header-avatar-container" class="w-8 h-8 rounded-full bg-surface-dim overflow-hidden border border-dusty-rose/20 dark:border-white/20 cursor-pointer hover:opacity-80 transition-opacity" title="View Profile">
+        <img id="user-avatar" alt="User Avatar" class="w-full h-full object-cover hidden" />
+        <span id="user-avatar-initials" class="text-deep-pine font-bold text-xs select-none w-full h-full flex items-center justify-center bg-sage-green/35"></span>
+      </div>
+    </div>
+  </header>
+  `;
+
+  // We find existing header and replace it, OR prepend if it doesn't exist
+  const existingHeader = mainContainer.querySelector('header');
+  if (existingHeader) {
+    existingHeader.outerHTML = headerHtml;
+  } else {
+    mainContainer.insertAdjacentHTML('afterbegin', headerHtml);
+  }
+
+  // Modals HTML
+  const modalsHtml = `
+  <!-- Action Hub Modal -->
+  <div id="action-hub-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
+      <div class="bg-surface-container-lowest dark:bg-deep-pine rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-dusty-rose/20 dark:border-white/10 overflow-hidden">
+          <div class="bg-soft-parchment dark:bg-surface-dim p-md flex justify-between items-center border-b border-dusty-rose/20 dark:border-white/10">
+              <h2 class="font-headline-md text-deep-pine dark:text-soft-parchment font-bold flex items-center gap-2">
+                  <span class="material-symbols-outlined">bolt</span> Quick Actions
+              </h2>
+              <button id="close-action-hub" class="text-dusty-rose dark:text-soft-parchment/60 hover:text-deep-pine dark:hover:text-white p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+          <div class="p-md flex flex-col gap-2">
+              <a href="catalog.html?action=add-book" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-white/5 transition-colors text-deep-pine dark:text-soft-parchment font-label-md">
+                  <span class="material-symbols-outlined text-teal-blue">library_add</span> Add New Book
+              </a>
+              <a href="students.html?action=add-student" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-white/5 transition-colors text-deep-pine dark:text-soft-parchment font-label-md">
+                  <span class="material-symbols-outlined text-sage-green">person_add</span> Register Student
+              </a>
+              <a href="transactions.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-white/5 transition-colors text-deep-pine dark:text-soft-parchment font-label-md">
+                  <span class="material-symbols-outlined text-dusty-rose">qr_code_scanner</span> Issue / Return Loan
+              </a>
+              <a href="reports.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low dark:hover:bg-white/5 transition-colors text-deep-pine dark:text-soft-parchment font-label-md">
+                  <span class="material-symbols-outlined text-deep-pine dark:text-soft-parchment">assessment</span> Generate Reports
+              </a>
+          </div>
+      </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
+      <div class="bg-surface-container-lowest dark:bg-deep-pine rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 dark:border-white/10 overflow-hidden">
+          <div class="bg-soft-parchment dark:bg-surface-dim p-md flex justify-between items-center border-b border-dusty-rose/20 dark:border-white/10">
+              <h2 class="font-headline-md text-deep-pine dark:text-soft-parchment font-bold flex items-center gap-2">
+                  <span class="material-symbols-outlined">help</span> System Guide
+              </h2>
+              <button id="close-help-modal" class="text-dusty-rose dark:text-soft-parchment/60 hover:text-deep-pine dark:hover:text-white p-1 rounded-lg hover:bg-dusty-rose/10 transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+          <div class="p-lg flex flex-col gap-4 text-deep-pine dark:text-soft-parchment/90 font-body-sm">
+              <p>Welcome to the <strong>Scholarly Archive Library Management System</strong>.</p>
+              <ul class="list-disc pl-5 space-y-2">
+                  <li><strong>Dashboard:</strong> View key metrics, active loans, and overdue items.</li>
+                  <li><strong>Catalog:</strong> Browse books, add new inventory, and manage copies.</li>
+                  <li><strong>Transactions:</strong> Process borrows and returns seamlessly.</li>
+                  <li><strong>Students:</strong> Manage patron accounts and issue library cards.</li>
+              </ul>
+              <p class="mt-2 text-xs text-dusty-rose dark:text-soft-parchment/60">If you experience issues, please contact the system administrator or raise an IT ticket.</p>
+          </div>
+      </div>
+  </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalsHtml);
+
+  // Bind Theme Toggle
+  document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    const icon = document.getElementById('btn-theme-toggle').querySelector('span');
+    if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+  });
+
+  // Bind Action Hub
+  const actionHubBtn = document.getElementById('btn-action-hub');
+  const actionHubModal = document.getElementById('action-hub-modal');
+  if (actionHubBtn && actionHubModal) {
+    actionHubBtn.addEventListener('click', () => {
+      actionHubModal.classList.remove('hidden');
+      actionHubModal.classList.add('flex');
+    });
+    document.getElementById('close-action-hub')?.addEventListener('click', () => {
+      actionHubModal.classList.add('hidden');
+      actionHubModal.classList.remove('flex');
+    });
+  }
+
+  // Bind Help Modal
+  const helpBtn = document.getElementById('btn-global-help');
+  const helpModal = document.getElementById('help-modal');
+  if (helpBtn && helpModal) {
+    helpBtn.addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+      helpModal.classList.add('flex');
+    });
+    document.getElementById('close-help-modal')?.addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+      helpModal.classList.remove('flex');
+    });
+  }
+
+  // Close modals on click outside
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'action-hub-modal') {
+      actionHubModal.classList.add('hidden');
+      actionHubModal.classList.remove('flex');
+    }
+    if (e.target.id === 'help-modal') {
+      helpModal.classList.add('hidden');
+      helpModal.classList.remove('flex');
+    }
+  });
+
+  // Init Avatar using the already-fetched profile data in initNav (we must fetch it again or pass it)
+  // Let's rely on the topAvatar sync that happens inside initNav, we just need to ensure the IDs match!
+
+  // Global Search: redirect to catalog on Enter from any page
+  const globalSearchInput = document.getElementById('global-search');
+  if (globalSearchInput) {
+    globalSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = globalSearchInput.value.trim();
+        if (!query) return;
+        // If we're already on the catalog page, just trigger the local filter
+        if (window.location.pathname.includes('catalog.html')) {
+          // The catalog page's own debounce listener will handle it,
+          // but let's fire an input event to be sure
+          globalSearchInput.dispatchEvent(new Event('input'));
+          return;
+        }
+        // Redirect to catalog with ?q= parameter
+        window.location.href = `catalog.html?q=${encodeURIComponent(query)}`;
+      }
+    });
+  }
 }
 
 async function _navFetchBadges(role, userId) {
   try {
-    // Overdue badge
-    let overdueQ = window.sbClient
-      .from('loans')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .lt('due_date', new Date().toISOString());
-    if (role !== 'librarian') overdueQ = overdueQ.eq('user_id', userId);
-    const { count: overdueCount } = await overdueQ;
-    if (overdueCount > 0) {
-      document.getElementById('nav-overdue-badge')?.classList.remove('hidden');
-    }
+    const overdueBadge = document.getElementById('nav-overdue-badge');
+    const reservationsBadge = document.getElementById('nav-reservations-badge');
 
-    // Reservations badge
-    let resQ = window.sbClient
-      .from('reservations')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending');
-    if (role !== 'librarian') resQ = resQ.eq('user_id', userId);
-    const { count: resCount } = await resQ;
-    if (resCount > 0) {
-      document.getElementById('nav-reservations-badge')?.classList.remove('hidden');
+    if (!overdueBadge && !reservationsBadge) return;
+
+    const now = new Date().toISOString();
+
+    if (role === 'librarian') {
+      const { data: overdueLoans, error: overdueErr } = await window.sbClient
+        .from('loans')
+        .select('id')
+        .eq('status', 'active')
+        .lt('due_date', now)
+        .limit(1);
+
+      if (!overdueErr && overdueLoans && overdueLoans.length > 0) {
+        overdueBadge?.classList.remove('hidden');
+      } else {
+        overdueBadge?.classList.add('hidden');
+      }
+
+      const { data: pendingRes, error: resErr } = await window.sbClient
+        .from('reservations')
+        .select('id')
+        .eq('status', 'pending')
+        .limit(1);
+
+      if (!resErr && pendingRes && pendingRes.length > 0) {
+        reservationsBadge?.classList.remove('hidden');
+      } else {
+        reservationsBadge?.classList.add('hidden');
+      }
+    } else {
+      const { data: studentOverdue, error: overdueErr } = await window.sbClient
+        .from('loans')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .lt('due_date', now)
+        .limit(1);
+
+      if (!overdueErr && studentOverdue && studentOverdue.length > 0) {
+        overdueBadge?.classList.remove('hidden');
+      } else {
+        overdueBadge?.classList.add('hidden');
+      }
+
+      const { data: studentRes, error: resErr } = await window.sbClient
+        .from('reservations')
+        .select('id')
+        .eq('status', 'pending')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (!resErr && studentRes && studentRes.length > 0) {
+        reservationsBadge?.classList.remove('hidden');
+      } else {
+        reservationsBadge?.classList.add('hidden');
+      }
     }
-  } catch (e) {
-    console.error('nav.js badge fetch error:', e);
+  } catch (err) {
+    console.error('nav.js: Failed to fetch badge counts:', err);
   }
 }
 

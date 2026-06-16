@@ -16,13 +16,15 @@ async function renderStudents(filter = '') {
     list.innerHTML = filtered.map(s => {
         const hasOverdue = s.activeLoans > 0 && s.overdueCount > 0;
         const statusBadge = hasOverdue
-            ? '<span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Overdue</span>'
+            ? '<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-wider">Overdue</span>'
             : s.activeLoans > 0
-            ? '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Active</span>'
-            : '<span class="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">No Loans</span>';
+            ? '<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider">Active Loan</span>'
+            : s.reservationCount > 0
+            ? '<span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-wider">Reserved</span>'
+            : '<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">No Bookings</span>';
 
         const initials = (s.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        return `<div onclick="viewStudentDetails('${s.id}')" class="grid grid-cols-7 px-md py-3 items-center text-sm hover:bg-surface-container-low cursor-pointer transition-colors ${hasOverdue ? 'bg-red-50/30' : ''}">
+        return `<div onclick="viewStudentDetails('${s.id}')" class="grid grid-cols-8 px-md py-3 items-center text-sm hover:bg-surface-container-low cursor-pointer transition-colors ${hasOverdue ? 'bg-error-container/20' : ''}">
             <div class="col-span-2 flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-deep-pine text-soft-parchment flex items-center justify-center text-xs font-bold flex-shrink-0">${initials}</div>
                 <div>
@@ -31,12 +33,19 @@ async function renderStudents(filter = '') {
                 </div>
             </div>
             <span class="text-dusty-rose text-xs font-mono">${s.library_id || '—'}</span>
-            <span class="text-center font-semibold ${s.activeLoans > 0 ? 'text-teal-blue' : 'text-dusty-rose/50'}">${s.activeLoans || 0}</span>
-            <span class="text-center font-semibold ${s.reservationCount > 0 ? 'text-sage-green' : 'text-dusty-rose/50'}">${s.reservationCount || 0}</span>
-            <div class="text-center">${statusBadge}</div>
+            
+            <div class="col-span-2 flex flex-col gap-0.5 min-w-0">
+                <span class="font-medium text-deep-pine truncate text-xs" title="${s.bookedBook || 'No active bookings'}">${s.bookedBook || '—'}</span>
+                <div class="flex">${statusBadge}</div>
+            </div>
+            
+            <span class="text-center text-dusty-rose text-xs">${s.bookedDate || '—'}</span>
+            <span class="text-center text-dusty-rose text-xs">${s.bookedTime || '—'}</span>
+            
             <div class="flex items-center justify-end gap-2 text-right">
                 <button onclick="event.stopPropagation(); openEditStudentModal('${s.id}')" class="p-1 rounded-md text-teal-blue hover:bg-teal-blue/10 transition-colors" title="Edit Student"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-                <button onclick="event.stopPropagation(); suspendStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-error hover:bg-error/10 transition-colors" title="Suspend Student"><span class="material-symbols-outlined text-[18px]">person_off</span></button>
+                <button onclick="event.stopPropagation(); suspendStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-slate-500 hover:bg-slate-100 transition-colors" title="Suspend Student"><span class="material-symbols-outlined text-[18px]">person_off</span></button>
+                <button onclick="event.stopPropagation(); deleteStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-error hover:bg-error/10 transition-colors" title="Delete Student"><span class="material-symbols-outlined text-[18px]">delete_forever</span></button>
             </div>
         </div>`;
     }).join('');
@@ -59,28 +68,86 @@ async function init() {
     const { data: students, error } = await window.sbClient.from('library_users').select('*').eq('role', 'student').order('full_name');
     if (error) { document.getElementById('students-list').innerHTML = `<div class="px-md py-8 text-center text-error">Error: ${error.message}</div>`; return; }
 
-    // Fetch aggregates: active loans + reservations per user
-    const [{ data: loans }, { data: reservations }] = await Promise.all([
-        window.sbClient.from('loans').select('user_id, status, due_date').eq('status', 'active'),
-        window.sbClient.from('reservations').select('user_id, status').eq('status', 'pending')
-    ]);
+    const studentIds = (students || []).map(s => s.id);
+
+    // Fetch aggregates: active loans + reservations specifically for the loaded student user IDs
+    let loans = [];
+    let reservations = [];
+    if (studentIds.length > 0) {
+        const [loansRes, reservationsRes] = await Promise.all([
+            window.sbClient.from('loans')
+                .select('user_id, status, due_date, created_at, books(title)')
+                .eq('status', 'active')
+                .in('user_id', studentIds),
+            window.sbClient.from('reservations')
+                .select('user_id, status, created_at, books(title)')
+                .eq('status', 'pending')
+                .in('user_id', studentIds)
+        ]);
+        loans = loansRes.data || [];
+        reservations = reservationsRes.data || [];
+    }
 
     const now = new Date();
     const loanMap = {};
     const overdueMap = {};
-    (loans || []).forEach(l => {
-        loanMap[l.user_id] = (loanMap[l.user_id] || 0) + 1;
-        if (new Date(l.due_date) < now) overdueMap[l.user_id] = (overdueMap[l.user_id] || 0) + 1;
-    });
     const reservationMap = {};
-    (reservations || []).forEach(r => { reservationMap[r.user_id] = (reservationMap[r.user_id] || 0) + 1; });
+    const latestBookingMap = {};
 
-    allStudents = students.map(s => ({
-        ...s,
-        activeLoans: loanMap[s.id] || 0,
-        overdueCount: overdueMap[s.id] || 0,
-        reservationCount: reservationMap[s.id] || 0,
-    }));
+    loans.forEach(l => {
+        loanMap[l.user_id] = (loanMap[l.user_id] || 0) + 1;
+        const isOverdue = new Date(l.due_date) < now;
+        if (isOverdue) {
+            overdueMap[l.user_id] = (overdueMap[l.user_id] || 0) + 1;
+        }
+
+        const currentLatest = latestBookingMap[l.user_id];
+        if (!currentLatest || new Date(l.created_at) > new Date(currentLatest.created_at)) {
+            latestBookingMap[l.user_id] = {
+                type: 'loan',
+                created_at: l.created_at,
+                title: l.books?.title || 'Unknown Book',
+                isOverdue: isOverdue
+            };
+        }
+    });
+
+    reservations.forEach(r => {
+        reservationMap[r.user_id] = (reservationMap[r.user_id] || 0) + 1;
+
+        const currentLatest = latestBookingMap[r.user_id];
+        if (!currentLatest || new Date(r.created_at) > new Date(currentLatest.created_at)) {
+            latestBookingMap[r.user_id] = {
+                type: 'reservation',
+                created_at: r.created_at,
+                title: r.books?.title || 'Unknown Book'
+            };
+        }
+    });
+
+    allStudents = students.map(s => {
+        const latest = latestBookingMap[s.id] || null;
+        let bookedBook = '';
+        let bookedDate = '';
+        let bookedTime = '';
+
+        if (latest) {
+            bookedBook = latest.title;
+            const bDate = new Date(latest.created_at);
+            bookedDate = bDate.toLocaleDateString();
+            bookedTime = bDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        return {
+            ...s,
+            activeLoans: loanMap[s.id] || 0,
+            overdueCount: overdueMap[s.id] || 0,
+            reservationCount: reservationMap[s.id] || 0,
+            bookedBook,
+            bookedDate,
+            bookedTime
+        };
+    });
 
     const totalLoans = Object.values(loanMap).reduce((a, b) => a + b, 0);
     const totalOverdue = Object.values(overdueMap).reduce((a, b) => a + b, 0);
@@ -141,10 +208,9 @@ async function submitAddStudent() {
     
     if (!fullName || !userIdInput || !password) return;
     
-    let authIdentifier = userIdInput;
-    if (!userIdInput.includes('@')) {
-        authIdentifier = `${userIdInput}@student.scholarly.local`;
-    }
+    const usernameNormalized = userIdInput.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+    const authIdentifier = `${usernameNormalized}@student.scholarly.app`;
+    const finalLibId = libId || usernameNormalized;
     
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Creating...';
@@ -166,7 +232,7 @@ async function submitAddStudent() {
                 data: {
                     full_name: fullName,
                     role: 'student',
-                    library_id: libId
+                    library_id: finalLibId
                 }
             }
         });
@@ -174,23 +240,34 @@ async function submitAddStudent() {
         if (error) throw error;
         
         statusMsg.textContent = 'Student created successfully!';
-        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-green-100 text-green-800';
+        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-blue-100 text-blue-800';
         statusMsg.classList.remove('hidden');
         
         // The newly created user is in data.user, but we should fetch them properly to get the DB record
         // Give the database trigger a moment to insert into library_users
         setTimeout(async () => {
             const { data: newStudent } = await window.sbClient.from('library_users').select('*').eq('id', data.user.id).single();
-            if (newStudent) {
-                allStudents.push({
-                    ...newStudent,
-                    activeLoans: 0,
-                    overdueCount: 0,
-                    reservationCount: 0
-                });
-                document.getElementById('student-count').textContent = `${allStudents.length} student${allStudents.length !== 1 ? 's' : ''}`;
-                renderStudents(document.getElementById('student-search').value);
-            }
+            
+            const studentRecord = newStudent || {
+                id: data.user.id,
+                full_name: fullName,
+                role: 'student',
+                library_id: libId,
+                created_at: new Date().toISOString()
+            };
+
+            allStudents.push({
+                ...studentRecord,
+                activeLoans: 0,
+                overdueCount: 0,
+                reservationCount: 0,
+                bookedBook: '',
+                bookedDate: '',
+                bookedTime: ''
+            });
+            document.getElementById('student-count').textContent = `${allStudents.length} student${allStudents.length !== 1 ? 's' : ''}`;
+            renderStudents(document.getElementById('student-search').value);
+            
             setTimeout(() => {
                 closeAddStudentModal();
             }, 1000);
@@ -297,6 +374,42 @@ async function suspendStudent(id, name) {
     } catch (err) {
         console.error(err);
         alert('Failed to suspend student: ' + err.message);
+    }
+}
+
+async function deleteStudent(id, name) {
+    if (!confirm(`⚠️ PERMANENTLY DELETE "${name}"?\n\nThis will remove their account and all associated records from the library system. This action CANNOT be undone.`)) {
+        return;
+    }
+    // Second confirmation for safety
+    if (!confirm(`Final confirmation: Delete "${name}" permanently?`)) {
+        return;
+    }
+    
+    try {
+        const { error } = await window.sbClient
+            .from('library_users')
+            .delete()
+            .eq('id', id);
+            
+        if (error) throw error;
+        
+        // Remove from local state
+        allStudents = allStudents.filter(s => s.id !== id);
+        
+        // Update count badge
+        document.getElementById('student-count').textContent = `${allStudents.length} student${allStudents.length !== 1 ? 's' : ''}`;
+        
+        // Update stats row total
+        const statsTotalEl = document.querySelector('#stats-row div:first-child p.text-3xl');
+        if (statsTotalEl) statsTotalEl.textContent = allStudents.length;
+        
+        // Re-render list
+        renderStudents(document.getElementById('student-search').value);
+        
+    } catch (err) {
+        console.error(err);
+        alert('Failed to delete student: ' + err.message);
     }
 }
 
@@ -434,7 +547,7 @@ async function viewStudentDetails(studentId) {
                         <p class="text-xs mt-2 text-dusty-rose">Borrowed: ${new Date(l.created_at).toLocaleDateString()} · Returned: ${returnDateStr}</p>
                     </div>
                     <div>
-                        <span class="px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Returned</span>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">Returned</span>
                     </div>
                 </div>`;
             }).join('');

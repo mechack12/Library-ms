@@ -35,7 +35,7 @@
     </script>
 
 </head>
-<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
+<body class="bg-soft-parchment text-deep-pine font-body-md text-body-md antialiased overflow-x-hidden">
 <!-- Shared Component: SideNavBar -->
 <aside id="app-sidebar"></aside>
 <!-- Shared Component: TopAppBar -->
@@ -457,15 +457,29 @@
     }
 
     // Load data when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-        initNav().then(() => initNotifications());
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Wait for dynamic navigation and header injection
+        await initNav();
+        initNotifications();
+
+        // Read ?q= from URL and pre-fill search input
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchFromUrl = urlParams.get('q');
+        if (searchFromUrl) {
+            const searchInput = document.getElementById('global-search');
+            if (searchInput) {
+                searchInput.value = searchFromUrl;
+            }
+        }
+
         checkAuthAndLoad();
 
         // Filter event listeners
         document.getElementById('apply-filters-btn').addEventListener('click', loadBooks);
 
         document.getElementById('reset-filters-btn').addEventListener('click', () => {
-            document.getElementById('global-search').value = '';
+            const searchInput = document.getElementById('global-search');
+            if (searchInput) searchInput.value = '';
             document.querySelector('input[name="availability"][value="all"]').checked = true;
             document.getElementById('filter-author').value = '';
             document.getElementById('filter-isbn').value = '';
@@ -477,12 +491,15 @@
 
         document.getElementById('sort-select').addEventListener('change', loadBooks);
 
-        // Global search with debounce
+        // Global search with debounce (on the post-injection element)
         let searchTimeout;
-        document.getElementById('global-search').addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(loadBooks, 400);
-        });
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(loadBooks, 400);
+            });
+        }
 
         // Genre search filter (UI only)
         document.getElementById('genre-search').addEventListener('input', (e) => {

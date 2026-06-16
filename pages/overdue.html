@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
 </head>
-<body class="bg-background text-on-background font-body-md antialiased flex">
+<body class="bg-soft-parchment text-deep-pine font-body-md antialiased flex">
 
 <!-- SideNavBar -->
 <aside id="app-sidebar"></aside>
@@ -56,6 +56,30 @@
 </main>
 </div>
 
+<!-- Payment Modal -->
+<div id="payment-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-dusty-rose/20 overflow-hidden">
+        <div class="bg-error-container/20 p-md flex justify-between items-center border-b border-error/10">
+            <h2 class="font-headline-md text-error font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">payments</span> Overdue Penalty
+            </h2>
+            <button onclick="closePaymentModal()" class="text-dusty-rose hover:text-error p-1 rounded-lg transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-lg flex flex-col gap-md text-center">
+            <p class="font-body-md text-dusty-rose">To return this book, you must pay the accumulated late fine.</p>
+            <div class="text-4xl font-bold text-deep-pine my-4" id="fine-amount-display">0 FRW</div>
+            <p class="font-body-sm text-dusty-rose bg-surface-container-low p-3 rounded-lg border border-dusty-rose/10">
+                Mock Payment Gateway Simulation.<br/> Clicking Confirm will process a mock payment.
+            </p>
+            <button id="confirm-payment-btn" class="w-full py-3 bg-teal-blue hover:bg-secondary text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
+                Confirm Payment
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 function showToast(message, type = 'success') {
     const existing = document.getElementById('toast-notification');
@@ -69,12 +93,49 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s'; setTimeout(() => toast.remove(), 500); }, 4000);
 }
 
-async function returnBook(loanId, bookId, currentCopies) {
+async function returnBook(loanId, bookId, currentCopies, fineAmount = 0) {
+    if (fineAmount > 0) {
+        // Open payment modal
+        document.getElementById('payment-modal').style.display = 'flex';
+        document.getElementById('fine-amount-display').textContent = `${fineAmount} FRW`;
+        
+        // Override the confirm button action to process the return after payment
+        document.getElementById('confirm-payment-btn').onclick = async function() {
+            this.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Processing...';
+            this.disabled = true;
+            try {
+                // Simulate payment delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                await processReturn(loanId, bookId, currentCopies);
+                closePaymentModal();
+                showToast('Payment successful! Book returned.');
+            } catch (err) {
+                showToast(err.message || 'Payment or return failed.', 'error');
+            } finally {
+                this.innerHTML = 'Confirm Payment';
+                this.disabled = false;
+            }
+        };
+        return;
+    }
+
+    try {
+        await processReturn(loanId, bookId, currentCopies);
+        showToast('Book returned successfully!');
+    } catch (err) {
+        showToast(err.message || 'Failed to return book.', 'error');
+    }
+}
+
+async function processReturn(loanId, bookId, currentCopies) {
     const { error: le } = await window.sbClient.from('loans').update({ status: 'returned', return_date: new Date().toISOString() }).eq('id', loanId);
-    if (le) { showToast('Return failed: ' + le.message, 'error'); return; }
+    if (le) throw le;
     await window.sbClient.from('books').update({ available_copies: (currentCopies || 0) + 1 }).eq('id', bookId);
-    showToast('Book returned successfully!');
     init();
+}
+
+function closePaymentModal() {
+    document.getElementById('payment-modal').style.display = 'none';
 }
 
 async function init() {
@@ -146,21 +207,27 @@ async function init() {
 
     list.innerHTML = loans.map(l => {
         const daysOverdue = Math.floor((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
-        const urgency = daysOverdue > 14 ? 'bg-red-100 border-red-300' : daysOverdue > 7 ? 'bg-orange-50 border-orange-200' : 'bg-yellow-50 border-yellow-200';
+        const fineAmount = daysOverdue > 0 ? daysOverdue * 500 : 0;
+        
+        const urgency = daysOverdue > 14 ? 'bg-error-container border-error' : daysOverdue > 7 ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-300';
         const userInfo = isLibrarian ? `<span class="text-dusty-rose"> · ${l.library_users?.full_name || 'Unknown User'}</span>` : '';
         return `<div class="px-md py-4 flex items-center justify-between gap-4 ${urgency} border-l-4">
             <div class="flex-1 min-w-0">
                 <p class="font-body-md text-deep-pine font-semibold">${l.books?.title || 'Unknown'}</p>
                 <p class="font-body-sm text-dusty-rose">${l.books?.author || ''}${userInfo}</p>
-                <p class="font-label-md text-error mt-1">Due: ${new Date(l.due_date).toLocaleDateString()} · <strong>${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue</strong></p>
+                <p class="font-label-md text-error mt-1">Due: ${new Date(l.due_date).toLocaleDateString()} · <strong>${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue</strong> (Fine: <strong>${fineAmount} FRW</strong>)</p>
             </div>
-            <button onclick="returnBook('${l.id}', '${l.books?.id}', ${l.books?.available_copies || 0})" class="bg-teal-blue text-white px-4 py-2 rounded-lg font-label-md hover:opacity-90 transition flex items-center gap-2 flex-shrink-0">
-                <span class="material-symbols-outlined text-[16px]">undo</span> Return
+            <button onclick="returnBook('${l.id}', '${l.books?.id}', ${l.books?.available_copies || 0}, ${fineAmount})" class="bg-error text-white px-4 py-2 rounded-lg font-label-md hover:opacity-90 transition flex items-center gap-2 flex-shrink-0">
+                <span class="material-symbols-outlined text-[16px]">payments</span> Pay Fine & Return
             </button>
         </div>`;
     }).join('');
 }
 
-document.addEventListener('DOMContentLoaded', () => { initNav().then(() => initNotifications()); init(); });
+document.addEventListener('DOMContentLoaded', async () => {
+    await initNav();
+    initNotifications();
+    init();
+});
 </script>
 </body></html>

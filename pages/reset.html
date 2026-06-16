@@ -17,7 +17,7 @@
       .material-symbols-outlined {font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;}
     </style>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased overflow-x-hidden">
+<body class="bg-soft-parchment text-deep-pine font-body-md antialiased min-h-screen flex items-center justify-center p-md">
     <div class="w-full max-w-4xl flex flex-col md:flex-row rounded-xl overflow-hidden shadow-2xl border border-dusty-rose/20 bg-surface-container-lowest">
         <!-- Left Panel Branding -->
         <div class="hidden md:flex flex-col w-1/2 bg-deep-pine text-soft-parchment p-xl relative overflow-hidden">
@@ -34,7 +34,7 @@
             </div>
         </div>
         <!-- Right Panel Form -->
-        <div class="w-full md:w-1/2 p-lg md:p-xl flex flex-col bg-soft-parchment">
+        <div class="w-full md:w-1/2 p-lg md:p-xl flex flex-col bg-surface-container-lowest">
             <div class="mb-md text-center md:text-left">
                 <h2 class="font-headline-lg text-headline-lg text-deep-pine mb-xs">Reset Password</h2>
                 <p class="font-body-md text-body-md text-dusty-rose">Enter your email to receive a reset link.</p>
@@ -47,7 +47,7 @@
                         <input class="w-full pl-10 pr-4 py-sm rounded-lg bg-surface-container-lowest border border-dusty-rose/30 focus:border-sage-green focus:ring-1 focus:ring-sage-green font-body-md text-body-md text-deep-pine placeholder:text-dusty-rose/50 outline-none transition-shadow" id="reset-email" placeholder="you@domain.com" type="email" required/>
                     </div>
                 </div>
-                <button id="reset-btn" class="mt-md w-full py-sm px-md bg-primary hover:bg-primary/90 text-on-primary font-label-lg rounded-lg flex items-center justify-center gap-2 transition-colors" type="submit">
+                <button id="reset-btn" class="mt-md w-full py-sm px-md bg-sage-green hover:bg-secondary text-surface-container-lowest font-label-lg rounded-lg flex items-center justify-center gap-2 transition-colors" type="submit">
                     Send Reset Link <span class="material-symbols-outlined text-[20px]">mail</span>
                 </button>
                 <div id="status-msg" class="hidden mt-sm p-sm rounded-lg font-body-sm text-center"></div>

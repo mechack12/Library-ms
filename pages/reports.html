@@ -14,7 +14,7 @@
 .bar-fill { transition: width 1s ease; }
 </style>
 </head>
-<body class="bg-background text-on-background font-body-md antialiased flex">
+<body class="bg-soft-parchment text-deep-pine font-body-md antialiased flex">
 
 <!-- SideNavBar -->
 <aside id="app-sidebar"></aside>
@@ -131,7 +131,7 @@ async function init() {
 
     const sortedGenres = Object.entries(genreCount).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const maxGenreCount = sortedGenres.length > 0 ? sortedGenres[0][1] : 1;
-    const colors = ['bg-teal-blue', 'bg-sage-green', 'bg-deep-pine', 'bg-dusty-rose', 'bg-yellow-400', 'bg-purple-400'];
+    const colors = ['bg-teal-blue', 'bg-sage-green', 'bg-deep-pine', 'bg-dusty-rose', 'bg-blue-300', 'bg-slate-300'];
 
     document.getElementById('genre-chart').innerHTML = sortedGenres.length === 0
         ? '<p class="text-dusty-rose text-center py-4 font-body-sm">Not enough data yet.</p>'
