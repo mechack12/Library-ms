@@ -131,7 +131,7 @@ async function init() {
 
     const sortedGenres = Object.entries(genreCount).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const maxGenreCount = sortedGenres.length > 0 ? sortedGenres[0][1] : 1;
-    const colors = ['bg-teal-blue', 'bg-sage-green', 'bg-deep-pine', 'bg-dusty-rose', 'bg-blue-300', 'bg-slate-300'];
+    const colors = ['bg-teal-blue', 'bg-sage-green', 'bg-deep-pine', 'bg-dusty-rose', 'bg-teal-blue/60', 'bg-surface-container-highest'];
 
     document.getElementById('genre-chart').innerHTML = sortedGenres.length === 0
         ? '<p class="text-dusty-rose text-center py-4 font-body-sm">Not enough data yet.</p>'

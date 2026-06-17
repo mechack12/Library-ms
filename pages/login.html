@@ -156,7 +156,7 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
             submitBtn.innerHTML = 'Log In <span class="material-symbols-outlined text-[20px]">arrow_forward</span>';
             formTitle.textContent = 'Welcome Back';
             formSubtitle.textContent = 'Please log in to continue to your account.';
-            switchPrompt.innerHTML = 'Don\'t have an account? <a class="font-label-md text-label-md text-deep-pine hover:text-teal-blue transition-colors cursor-pointer" onclick="switchMode(\'signup\')">Create one now</a>';
+            switchPrompt.innerHTML = "Don't have an account? <a class=\"font-label-md text-label-md text-deep-pine hover:text-teal-blue transition-colors cursor-pointer\" onclick=\"switchMode('signup')\">Create one now</a>";
         }
     }
 
@@ -191,10 +191,7 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
 
     window.resendVerification = async function(email) {
         showStatus('Sending verification email...', false);
-        const { error } = await window.sbClient.auth.resend({
-            type: 'signup',
-            email: email
-        });
+        const { error } = await window.sbClient.auth.resend({ type: 'signup', email: email });
         if (error) {
             showStatus('Failed to resend: ' + error.message, true);
         } else {
@@ -202,158 +199,136 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
         }
     };
 
-    // Password visibility toggle
     document.getElementById('toggle-pw').addEventListener('click', function() {
         const pw = document.getElementById('password');
         const icon = this.querySelector('span');
-        if (pw.type === 'password') {
-            pw.type = 'text';
-            icon.textContent = 'visibility';
-        } else {
-            pw.type = 'password';
-            icon.textContent = 'visibility_off';
-        }
+        if (pw.type === 'password') { pw.type = 'text'; icon.textContent = 'visibility'; }
+        else { pw.type = 'password'; icon.textContent = 'visibility_off'; }
     });
 
-    // Form submission
     document.getElementById('auth-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        let email = document.getElementById('userId').value.trim();
+        const identifier = document.getElementById('userId').value.trim();
         const password = document.getElementById('password').value;
         const submitBtn = document.getElementById('submit-btn');
+        const originalHTML = submitBtn.innerHTML;
 
-        if (!email) {
-            showStatus('Invalid data input: Please enter your email address or username.', true);
-            return;
-        }
-        if (!password) {
-            showStatus('Invalid data input: Please enter your password.', true);
-            return;
-        }
-
-        // Allow username by appending dummy domain if no '@' is present
-        let authIdentifier = email;
-        if (!email.includes('@')) {
-            if (currentRole === 'librarian') {
-                showStatus('Invalid data input: Librarians must use a valid email address.', true);
-                return;
-            }
-            authIdentifier = `${email}@student.scholarly.app`;
-        } else {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showStatus('Invalid data input: Please enter a valid email address.', true);
-                return;
-            }
-        }
+        if (!identifier) { showStatus('Invalid data input: Please enter your email address or username.', true); return; }
+        if (!password) { showStatus('Invalid data input: Please enter your password.', true); return; }
 
         if (currentMode === 'signup') {
             const fullName = document.getElementById('fullName').value.trim();
             const confirmPw = document.getElementById('confirmPassword').value;
-
-            if (!fullName) { showStatus('Invalid data input: Please enter your full name.', true); return; }
-            if (password !== confirmPw) { showStatus('Invalid data input: Passwords do not match.', true); return; }
-            if (password.length < 6) { showStatus('Invalid data input: Password must be at least 6 characters.', true); return; }
-            
-
+            if (!fullName) { showStatus('Please enter your full name.', true); return; }
+            if (password !== confirmPw) { showStatus('Passwords do not match.', true); return; }
+            if (password.length < 6) { showStatus('Password must be at least 6 characters.', true); return; }
         }
 
-        const originalHTML = submitBtn.innerHTML;
+        let authIdentifier = identifier;
+        if (currentRole === 'student') {
+            let username = identifier;
+            if (username.includes('@')) { username = username.split('@')[0]; }
+            authIdentifier = `${username.toLowerCase().replace(/[^a-z0-9_.-]/g, '')}@student.scholarly.app`;
+        } else {
+            if (!identifier.includes('@')) { showStatus('Librarians must use a valid email address.', true); return; }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(identifier)) { showStatus('Please enter a valid email address.', true); return; }
+        }
 
         submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Please wait...';
         submitBtn.disabled = true;
 
         try {
             if (currentMode === 'signup') {
-                // Sign Up
                 const fullName = document.getElementById('fullName').value.trim();
-                const { data, error } = await window.sbClient.auth.signUp({
-                    email: authIdentifier,
-                    password: password,
-                    options: {
-                        data: {
-                            full_name: fullName,
-                            role: currentRole,
-                            library_id: email.split('@')[0]
+                const libId = identifier.split('@')[0];
+                if (currentRole === 'student') {
+                    const studentId = crypto.randomUUID();
+                    const { error: userErr } = await window.sbClient.from('library_users').insert({ id: studentId, full_name: fullName, role: 'student', library_id: libId });
+                    if (userErr) throw userErr;
+                    const hashedPassword = await window.hashPassword(password);
+                    const { error: credErr } = await window.sbClient.from('student_credentials').insert({ user_id: studentId, username: identifier, password_hash: hashedPassword });
+                    if (credErr) throw credErr;
+                    const mockUser = { id: studentId, email: `${identifier.split('@')[0]}@student.scholarly.app`, user_metadata: { full_name: fullName, role: 'student', library_id: libId } };
+                    const mockSession = { access_token: 'mock-token-' + Math.random().toString(36).substring(2), user: mockUser, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600 };
+                    localStorage.setItem('sb-mock-session', JSON.stringify(mockSession));
+                    showStatus('Student account created! Redirecting...', false);
+                    setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 800);
+                } else {
+                    const { data, error } = await window.sbClient.auth.signUp({ email: authIdentifier, password, options: { data: { full_name: fullName, role: 'librarian', library_id: libId } } });
+                    if (error) throw error;
+                    showStatus('Account created! Redirecting...', false);
+                    setTimeout(() => { window.location.href = 'librarian-dashboard.html'; }, 800);
+                }
+            } else {
+                // Login flow
+                if (currentRole === 'student') {
+                    const username = identifier.split('@')[0].toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+                    const { data: cred, error: credErr } = await window.sbClient.from('student_credentials').select('password_hash, user_id').eq('username', username).maybeSingle();
+                    if (credErr) throw credErr;
+                    if (!cred) throw new Error('Invalid username or password');
+                    const hashedInput = await window.hashPassword(password);
+                    if (hashedInput !== cred.password_hash) throw new Error('Invalid username or password');
+                    const { data: profile, error: profErr } = await window.sbClient.from('library_users').select('*').eq('id', cred.user_id).maybeSingle();
+                    if (profErr) throw profErr;
+                    if (!profile) throw new Error('Profile not found');
+                    
+                    const mockUser = {
+                        id: profile.id,
+                        email: identifier,
+                        user_metadata: {
+                            full_name: profile.full_name,
+                            role: profile.role || 'student',
+                            library_id: profile.library_id
                         }
-                    }
-                });
+                    };
+                    const mockSession = {
+                        access_token: 'mock-token-' + Math.random().toString(36).substring(2),
+                        user: mockUser,
+                        expires_in: 3600,
+                        expires_at: Math.floor(Date.now() / 1000) + 3600
+                    };
+                    localStorage.setItem('sb-mock-session', JSON.stringify(mockSession));
 
-                if (error) throw error;
-
-                if (data.session) {
-                    showStatus('Account created! Logging you in...', false);
+                    showStatus('Login successful! Redirecting...', false);
                     setTimeout(() => {
-                        window.location.href = currentRole === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
+                        window.location.href = profile.role === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
                     }, 800);
                 } else {
-                    showStatus('Account created! Please check your email to verify your account before logging in. (If you are the developer, you can disable email confirmation in Supabase settings).', false);
-                    setTimeout(() => switchMode('login'), 3500);
-                }
+                    // Login flow for librarian
+                    const { data, error } = await window.sbClient.auth.signInWithPassword({
+                        email: authIdentifier,
+                        password
+                    });
+                    if (error) throw error;
 
-            } else {
-                // Log In
-                const { data, error } = await window.sbClient.auth.signInWithPassword({
-                    email: authIdentifier,
-                    password: password
-                });
+                    // First check user_metadata, then fall back to library_users table
+                    let actualRole = data.user.user_metadata?.role || null;
 
-                if (error) {
-                    if (error.message && error.message.includes('Email not confirmed')) {
-                        const username = email.split('@')[0];
-                        // Retrieve the profile from library_users to generate a valid session metadata
-                        const { data: profile, error: pe } = await window.sbClient
+                    if (!actualRole || actualRole !== 'librarian') {
+                        // Check library_users table for the real role
+                        const { data: profile } = await window.sbClient
                             .from('library_users')
-                            .select('*')
-                            .or(`library_id.eq.${username},library_id.eq.${email}`)
-                            .limit(1)
+                            .select('role')
+                            .eq('id', data.user.id)
                             .maybeSingle();
-
-                        if (profile) {
-                            const mockUser = {
-                                id: profile.id,
-                                email: authIdentifier,
-                                user_metadata: {
-                                    full_name: profile.full_name,
-                                    role: profile.role || 'student',
-                                    library_id: profile.library_id
-                                }
-                            };
-                            const mockSession = {
-                                access_token: 'mock-token-' + Math.random().toString(36).substring(2),
-                                user: mockUser,
-                                expires_in: 3600,
-                                expires_at: Math.floor(Date.now() / 1000) + 3600
-                            };
-                            localStorage.setItem('sb-mock-session', JSON.stringify(mockSession));
-
-                            showStatus('Login successful! Redirecting...', false);
-                            setTimeout(() => {
-                                window.location.href = profile.role === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
-                            }, 800);
-                            return;
+                        if (profile?.role) {
+                            actualRole = profile.role;
                         }
                     }
-                    throw error;
-                }
 
-                // Authorization check: Verify user's actual role
-                const actualRole = data.user.user_metadata?.role || 'student';
-                
-                if (currentRole === 'librarian' && actualRole !== 'librarian') {
-                    await window.sbClient.auth.signOut();
-                    showStatus('Authorization Failed: You do not have librarian privileges.', true);
-                    return;
-                }
-
-                showStatus('Login successful! Redirecting...', false);
-                setTimeout(() => {
-                    if (actualRole === 'librarian') {
-                        window.location.href = 'librarian-dashboard.html';
-                    } else {
-                        window.location.href = 'student-dashboard.html';
+                    // Final role check
+                    if (currentRole === 'librarian' && actualRole !== 'librarian') {
+                        await window.sbClient.auth.signOut();
+                        showStatus('Authorization Failed: You do not have librarian privileges.', true);
+                        return;
                     }
-                }, 800);
+
+                    showStatus('Login successful! Redirecting...', false);
+                    setTimeout(() => {
+                        window.location.href = actualRole === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
+                    }, 800);
+                }
             }
         } catch (err) {
             if (err.message !== 'SILENT') {
@@ -397,7 +372,6 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
   </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
   if (!window.supabase) {
     console.error('Supabase client not initialized');
     showStatus('Authentication service unavailable. Please try again later.', true);

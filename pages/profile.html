@@ -292,7 +292,7 @@ async function changePassword() {
         if (error) throw error;
 
         statusEl.textContent = 'Password updated successfully!';
-        statusEl.className = 'p-sm rounded-lg font-body-sm text-body-sm text-center bg-blue-100 text-blue-800';
+        statusEl.className = 'p-sm rounded-lg font-body-sm text-body-sm text-center bg-teal-blue/10 text-teal-blue';
         statusEl.classList.remove('hidden');
         document.getElementById('pw-form').reset();
     } catch (err) {
@@ -328,7 +328,7 @@ function showStatus(msg, isError, hide = false) {
     const el = document.getElementById('status-msg');
     if (hide) { el.classList.add('hidden'); return; }
     el.textContent = msg;
-    el.className = `p-sm rounded-lg font-body-sm text-body-sm text-center ${isError ? 'bg-error-container text-on-error-container' : 'bg-blue-100 text-blue-800'}`;
+    el.className = `p-sm rounded-lg font-body-sm text-body-sm text-center ${isError ? 'bg-error-container text-on-error-container' : 'bg-teal-blue/10 text-teal-blue'}`;
     el.classList.remove('hidden');
     setTimeout(() => el.classList.add('hidden'), 4000);
 }

@@ -21,7 +21,7 @@
     top: 4px; right: 4px;
     min-width: 18px; height: 18px;
     padding: 0 4px;
-    background: #ba1a1a;
+    background: #DC2626;
     color: #fff;
     font-size: 10px;
     font-weight: 700;
@@ -41,9 +41,9 @@
     width: 360px;
     max-height: 520px;
     background: #fff;
-    border: 1px solid rgba(124,108,119,.15);
+    border: 1px solid rgba(148,163,184,.2);
     border-radius: 16px;
-    box-shadow: 0 24px 60px rgba(34,49,39,.18), 0 4px 16px rgba(34,49,39,.10);
+    box-shadow: 0 24px 60px rgba(15,23,42,.12), 0 4px 16px rgba(15,23,42,.06);
     overflow: hidden;
     z-index: 9999;
     display: none;
@@ -61,44 +61,44 @@
   #notif-header {
     padding: 16px 20px 12px;
     display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid rgba(124,108,119,.12);
-    background: #fbf9f7;
+    border-bottom: 1px solid rgba(148,163,184,.12);
+    background: #F8FAFC;
     flex-shrink: 0;
   }
   #notif-header h3 {
     font-family: 'Roboto Flex', sans-serif;
     font-size: 16px; font-weight: 700;
-    color: #223127; margin: 0;
+    color: #0F172A; margin: 0;
     display: flex; align-items: center; gap: 8px;
   }
   #notif-header button {
     background: none; border: none;
     cursor: pointer;
-    color: #7C6C77;
+    color: #94A3B8;
     font-size: 20px; padding: 2px;
     border-radius: 6px;
     transition: background .15s;
     display: flex; align-items: center;
   }
-  #notif-header button:hover { background: rgba(124,108,119,.12); }
+  #notif-header button:hover { background: rgba(148,163,184,.12); }
 
   #notif-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(124,108,119,.10);
-    background: #fbf9f7;
+    border-bottom: 1px solid rgba(148,163,184,.10);
+    background: #F8FAFC;
     flex-shrink: 0;
   }
   .notif-tab {
     flex: 1; padding: 8px 4px;
     text-align: center;
-    font-size: 12px; font-weight: 600; color: #7C6C77;
+    font-size: 12px; font-weight: 600; color: #64748B;
     cursor: pointer;
     border-bottom: 2px solid transparent;
     transition: all .15s;
     background: none; border-left: none; border-right: none; border-top: none;
   }
-  .notif-tab:hover { color: #223127; }
-  .notif-tab.active { color: #68B684; border-bottom-color: #68B684; }
+  .notif-tab:hover { color: #0F172A; }
+  .notif-tab.active { color: #2563EB; border-bottom-color: #2563EB; }
 
   #notif-list {
     flex: 1;
@@ -107,18 +107,18 @@
   }
   #notif-list::-webkit-scrollbar { width: 4px; }
   #notif-list::-webkit-scrollbar-track { background: transparent; }
-  #notif-list::-webkit-scrollbar-thumb { background: rgba(124,108,119,.2); border-radius: 4px; }
+  #notif-list::-webkit-scrollbar-thumb { background: rgba(148,163,184,.2); border-radius: 4px; }
 
   .notif-item {
     display: flex; align-items: flex-start; gap: 12px;
     padding: 12px 20px;
     cursor: default;
-    border-bottom: 1px solid rgba(124,108,119,.07);
+    border-bottom: 1px solid rgba(148,163,184,.07);
     transition: background .12s;
   }
   .notif-item:last-child { border-bottom: none; }
-  .notif-item:hover { background: rgba(241,218,196,.25); }
-  .notif-item.unread { background: rgba(104,182,132,.05); }
+  .notif-item:hover { background: rgba(148,163,184,.05); }
+  .notif-item.unread { background: rgba(37,99,235,.04); }
 
   .notif-icon {
     width: 36px; height: 36px; border-radius: 50%;
@@ -126,48 +126,48 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
   }
-  .notif-icon.critical { background: rgba(186,26,26,.1); color: #ba1a1a; }
-  .notif-icon.warning  { background: rgba(234,179,8,.12); color: #a16207; }
-  .notif-icon.info     { background: rgba(86,163,166,.12); color: #56A3A6; }
-  .notif-icon.success  { background: rgba(104,182,132,.12); color: #68B684; }
+  .notif-icon.critical { background: rgba(220,38,38,.1); color: #DC2626; }
+  .notif-icon.warning  { background: rgba(100,116,139,.12); color: #64748B; }
+  .notif-icon.info     { background: rgba(37,99,235,.1); color: #2563EB; }
+  .notif-icon.success  { background: rgba(71,85,105,.12); color: #475569; }
 
   .notif-body { flex: 1; min-width: 0; }
   .notif-title {
-    font-size: 13px; font-weight: 600; color: #223127;
+    font-size: 13px; font-weight: 600; color: #0F172A;
     line-height: 1.3; margin-bottom: 2px;
   }
   .notif-desc {
-    font-size: 12px; color: #7C6C77; line-height: 1.4;
+    font-size: 12px; color: #64748B; line-height: 1.4;
   }
   .notif-time {
-    font-size: 10px; color: rgba(124,108,119,.7);
+    font-size: 10px; color: rgba(148,163,184,.7);
     margin-top: 4px;
   }
   .notif-action {
     display: inline-block; margin-top: 6px;
-    font-size: 11px; font-weight: 600; color: #56A3A6;
+    font-size: 11px; font-weight: 600; color: #2563EB;
     text-decoration: none;
     padding: 2px 8px; border-radius: 4px;
-    border: 1px solid rgba(86,163,166,.3);
+    border: 1px solid rgba(37,99,235,.3);
     transition: all .12s;
   }
-  .notif-action:hover { background: rgba(86,163,166,.1); }
+  .notif-action:hover { background: rgba(37,99,235,.1); }
 
   .notif-empty {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; padding: 48px 20px;
-    color: #7C6C77; font-size: 13px;
+    color: #64748B; font-size: 13px;
   }
   .notif-empty .material-symbols-outlined {
     font-size: 40px; margin-bottom: 10px;
-    color: rgba(124,108,119,.4);
+    color: rgba(148,163,184,.4);
   }
 
   #notif-footer {
     padding: 10px 20px;
-    border-top: 1px solid rgba(124,108,119,.10);
+    border-top: 1px solid rgba(148,163,184,.10);
     display: flex; justify-content: flex-end; gap: 8px;
-    background: #fbf9f7;
+    background: #F8FAFC;
     flex-shrink: 0;
   }
   #notif-footer button {
@@ -176,9 +176,9 @@
     cursor: pointer; border: none; transition: all .15s;
   }
   #btn-mark-all-read {
-    background: rgba(104,182,132,.12); color: #223127;
+    background: rgba(37,99,235,.1); color: #2563EB;
   }
-  #btn-mark-all-read:hover { background: rgba(104,182,132,.25); }
+  #btn-mark-all-read:hover { background: rgba(37,99,235,.2); }
   `;
 
   function injectStyles() {
@@ -455,7 +455,7 @@
     panel.innerHTML = `
       <div id="notif-header">
         <h3>
-          <span class="material-symbols-outlined" style="font-size:20px;color:#68B684">notifications</span>
+          <span class="material-symbols-outlined" style="font-size:20px;color:#2563EB">notifications</span>
           Notifications
         </h3>
         <button id="notif-close" title="Close">

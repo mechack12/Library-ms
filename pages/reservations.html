@@ -131,10 +131,10 @@ async function loadReservations() {
         return;
     }
 
-    const statusColors = { pending: 'bg-blue-50 text-blue-800', ready: 'bg-blue-100 text-blue-900', cancelled: 'bg-error-container text-on-error-container' };
+    const statusColors = { pending: 'bg-teal-blue/10 text-teal-blue', ready: 'bg-secondary-container text-on-secondary-container', cancelled: 'bg-error-container text-on-error-container' };
 
     list.innerHTML = reservations.map(r => {
-        const statusColor = statusColors[r.status] || 'bg-gray-100 text-gray-700';
+        const statusColor = statusColors[r.status] || 'bg-surface-container text-on-surface-variant';
         const canCancel = r.status === 'pending';
         const librarianControls = currentRole === 'librarian' && r.status === 'pending'
             ? `<button onclick="markReady('${r.id}')" class="text-teal-blue font-label-md hover:underline">Mark Ready</button>` : '';

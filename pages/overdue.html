@@ -209,7 +209,7 @@ async function init() {
         const daysOverdue = Math.floor((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
         const fineAmount = daysOverdue > 0 ? daysOverdue * 500 : 0;
         
-        const urgency = daysOverdue > 14 ? 'bg-error-container border-error' : daysOverdue > 7 ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-300';
+        const urgency = daysOverdue > 14 ? 'bg-error-container border-error' : daysOverdue > 7 ? 'bg-error-container/40 border-error/30' : 'bg-surface-variant border-outline-variant';
         const userInfo = isLibrarian ? `<span class="text-dusty-rose"> · ${l.library_users?.full_name || 'Unknown User'}</span>` : '';
         return `<div class="px-md py-4 flex items-center justify-between gap-4 ${urgency} border-l-4">
             <div class="flex-1 min-w-0">

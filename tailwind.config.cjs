@@ -1,9 +1,13 @@
 /**
  * Tailwind CSS configuration file.
- * Theme: Blue and Grey only.
- *   60% dominant: slate-900 deep blue-grey / navy
- *   30% dominant: slate-50/100 cool grey light surface
- *   10% accent: blue-600 royal blue / slate-500
+ * Theme: Blue, Red & Grey — 60-30-10 Color Rule
+ *
+ *  60% dominant:  #0F172A  slate-900 deep navy/grey (backgrounds, sidebars, text)
+ *  30% secondary: #F8FAFC  slate-50 / cool light grey (surfaces, containers, cards)
+ *  10% accent:
+ *    ├─ Blue  #2563EB  royal blue-600 (primary CTAs, links, active states, focus)
+ *    ├─ Red   #DC2626  red-600        (errors, overdue, delete, destructive)
+ *    └─ Grey  #64748B  slate-500      (secondary text, borders, muted elements)
  */
 module.exports = {
   darkMode: "class",
@@ -15,45 +19,49 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ── Brand tokens (Blue & Grey) ───────────────────────────────────────
-        "deep-pine":      "#0F172A",   // 60% dominant dark (slate-900 / navy-grey)
-        "soft-parchment": "#F8FAFC",   // 30% light surface / page background (slate-50)
-        "teal-blue":      "#2563EB",   // 10% blue accent (blue-600 royal blue)
-        "sage-green":     "#475569",   // 10% secondary accent (slate-600 dark grey)
-        "dusty-rose":     "#94A3B8",   // cool slate-grey (slate-400) for borders/text
+        // ── 60% DOMINANT: Deep Navy / Dark Grey ─────────────────────────────
+        "deep-pine":      "#0F172A",   // slate-900 – sidebar, navbars, headers, body text
+        "soft-parchment": "#F8FAFC",   // slate-50  – page backgrounds, light surfaces
 
-        // ── Error / Destructive / Alerts (Dark slate grey instead of red) ─────
-        "error":               "#1E293B",   // slate-800
-        "error-container":     "#E2E8F0",   // slate-200
-        "on-error":            "#F8FAFC",   // slate-50
-        "on-error-container":  "#1E293B",   // slate-800
+        // ── 10% ACCENT BLUE: Primary interactive ───────────────────────────
+        "teal-blue":      "#2563EB",   // blue-600 – primary buttons, links, focus rings, active nav
 
-        // ── Light surfaces (cool slate greys) ─────────────────────────────────
-        "surface":                    "#F8FAFC",
+        // ── 10% ACCENT RED: Alerts / Errors / Destructive ──────────────────
+        "error":               "#DC2626",   // red-600    – error text, delete, overdue
+        "error-container":     "#FEE2E2",   // red-100    – error badge backgrounds
+        "on-error":            "#FFFFFF",   // white      – text on error bg
+        "on-error-container":  "#991B1B",   // red-800    – text on error-container
+
+        // ── GREY SCALE: Supporting tones ────────────────────────────────────
+        "sage-green":     "#475569",   // slate-600  – secondary accents, icon fills
+        "dusty-rose":     "#94A3B8",   // slate-400  – muted text, borders, sub-labels
+
+        // ── 30% SECONDARY SURFACES ──────────────────────────────────────────
+        "surface":                    "#F8FAFC",   // slate-50
         "surface-bright":             "#FFFFFF",
-        "surface-dim":                "#E2E8F0",
-        "surface-variant":            "#F1F5F9",
+        "surface-dim":                "#E2E8F0",   // slate-200
+        "surface-variant":            "#F1F5F9",   // slate-100
         "surface-container-lowest":   "#FFFFFF",
-        "surface-container-low":      "#F8FAFC",
-        "surface-container":          "#F1F5F9",
-        "surface-container-high":     "#E2E8F0",
-        "surface-container-highest":  "#CBD5E1",
+        "surface-container-low":      "#F8FAFC",   // slate-50
+        "surface-container":          "#F1F5F9",   // slate-100
+        "surface-container-high":     "#E2E8F0",   // slate-200
+        "surface-container-highest":  "#CBD5E1",   // slate-300
         "background":                 "#F8FAFC",
 
-        // ── Primary system ───────────────────────────────────────────────────
-        "primary":                    "#0F172A",
-        "primary-container":          "#1E293B",
-        "primary-fixed":              "#CBD5E1",
-        "primary-fixed-dim":          "#94A3B8",
+        // ── PRIMARY SYSTEM (Navy / Dark) ─────────────────────────────────────
+        "primary":                    "#0F172A",   // slate-900
+        "primary-container":          "#1E293B",   // slate-800
+        "primary-fixed":              "#CBD5E1",   // slate-300
+        "primary-fixed-dim":          "#94A3B8",   // slate-400
         "on-primary":                 "#F8FAFC",
         "on-primary-container":       "#CBD5E1",
         "on-primary-fixed":           "#0F172A",
         "on-primary-fixed-variant":   "#1E293B",
         "inverse-primary":            "#2563EB",
 
-        // ── Secondary system ─────────────────────────────────────────────────
-        "secondary":                  "#475569",
-        "secondary-container":        "#E2E8F0",
+        // ── SECONDARY SYSTEM (Medium Grey) ──────────────────────────────────
+        "secondary":                  "#475569",   // slate-600
+        "secondary-container":        "#E2E8F0",   // slate-200
         "secondary-fixed":            "#E2E8F0",
         "secondary-fixed-dim":        "#CBD5E1",
         "on-secondary":               "#F8FAFC",
@@ -61,7 +69,7 @@ module.exports = {
         "on-secondary-fixed":         "#1E293B",
         "on-secondary-fixed-variant": "#334155",
 
-        // ── Tertiary system ──────────────────────────────────────────────────
+        // ── TERTIARY SYSTEM ──────────────────────────────────────────────────
         "tertiary":                   "#1E293B",
         "tertiary-container":         "#334155",
         "tertiary-fixed":             "#E2E8F0",
@@ -71,22 +79,24 @@ module.exports = {
         "on-tertiary-fixed":          "#0F172A",
         "on-tertiary-fixed-variant":  "#1E293B",
 
-        // ── On-surface / text ────────────────────────────────────────────────
+        // ── ON-SURFACE / TEXT ────────────────────────────────────────────────
         "on-surface":          "#0F172A",
         "on-surface-variant":  "#334155",
         "on-background":       "#0F172A",
 
-        // ── Outline / borders ────────────────────────────────────────────────
-        "outline":         "#94A3B8",
-        "outline-variant":  "#CBD5E1",
+        // ── OUTLINE / BORDERS ────────────────────────────────────────────────
+        "outline":          "#94A3B8",   // slate-400
+        "outline-variant":  "#CBD5E1",   // slate-300
 
-        // ── Inverse ──────────────────────────────────────────────────────────
+        // ── INVERSE ──────────────────────────────────────────────────────────
         "inverse-surface":     "#0F172A",
         "inverse-on-surface":  "#F8FAFC",
 
-        // ── Misc compatibility tokens ────────────────────────────────────────
-        "on-error-fixed":            "#F8FAFC",
+        // ── MISC ─────────────────────────────────────────────────────────────
+        "on-error-fixed":            "#FFFFFF",
         "on-secondary-fixed-alt":    "#1E293B",
+        "on-tertiary-fixed":         "#0F172A",
+        "on-tertiary-fixed-variant": "#1E293B",
       },
       borderRadius: {
         DEFAULT: "0.125rem",
@@ -117,8 +127,8 @@ module.exports = {
       },
       fontSize: {
         "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "500" }],
-        "label-lg":    ["14px", { lineHeight: "20px", letterSpacing: "0.1px",  fontWeight: "600" }],
-        "label-md":    ["12px", { lineHeight: "16px", letterSpacing: "0.5px",  fontWeight: "600" }],
+        "label-lg":    ["14px", { lineHeight: "20px", letterSpacing: "0.1px", fontWeight: "600" }],
+        "label-md":    ["12px", { lineHeight: "16px", letterSpacing: "0.5px", fontWeight: "600" }],
         "body-sm":     ["14px", { lineHeight: "20px", fontWeight: "400" }],
         "display-lg":  ["48px", { lineHeight: "56px", fontWeight: "700" }],
         "body-md":     ["16px", { lineHeight: "24px", fontWeight: "400" }],

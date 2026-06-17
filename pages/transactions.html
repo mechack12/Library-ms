@@ -108,10 +108,10 @@ async function loadTransactions() {
     list.innerHTML = loans.map(l => {
         const isOverdue = l.status === 'active' && new Date(l.due_date) < new Date();
         const statusBadge = l.status === 'returned'
-            ? '<span class="px-2 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">Returned</span>'
+            ? '<span class="px-2 py-1 rounded-full bg-surface-container-high text-sage-green text-xs font-semibold">Returned</span>'
             : isOverdue
             ? '<span class="px-2 py-1 rounded-full bg-error-container text-on-error-container text-xs font-semibold">Overdue</span>'
-            : '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Active</span>';
+            : '<span class="px-2 py-1 rounded-full bg-teal-blue/10 text-teal-blue text-xs font-semibold">Active</span>';
         const userDisplay = isLibrarian ? `<p class="font-label-md text-dusty-rose/70">${l.library_users?.full_name || 'Unknown'}</p>` : '';
         return `<div class="grid grid-cols-5 px-md py-3 items-center text-sm ${isOverdue ? 'bg-error-container/20' : ''}">
             <div class="col-span-2">

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npx tailwindcss -i ./src/input.css -o ./assets/css/tailwind.css --minify"
+    "build": "npx tailwindcss -i ./src/input.css -o ./assets/css/tailwind.css --minify",
+    "dev": "npx serve ."
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",

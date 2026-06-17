@@ -50,7 +50,7 @@
 <div class="flex-1 max-w-md mx-lg hidden lg:block">
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-deep-pine">search</span>
-<input class="w-full bg-surface-container-low border border-dusty-rose/30 rounded-lg py-2 pl-10 pr-4 font-body-sm text-deep-pine focus:outline-none focus:border-sage-green focus:ring-1 focus:ring-sage-green transition-shadow placeholder:text-dusty-rose shadow-[0_4px_12px_rgba(34,49,39,0.05)]" placeholder="Search catalog, users, or ISBN..." type="text"/>
+<input id="global-search" class="w-full bg-surface-container-low border border-dusty-rose/30 rounded-lg py-2 pl-10 pr-4 font-body-sm text-deep-pine focus:outline-none focus:border-sage-green focus:ring-1 focus:ring-sage-green transition-shadow placeholder:text-dusty-rose shadow-[0_4px_12px_rgba(34,49,39,0.05)]" placeholder="Search catalog, users, or ISBN..." type="text"/>
 </div>
 </div>
 <!-- Right Side: Actions -->
@@ -516,7 +516,7 @@
                         <div>
                             ${isOverdue 
                                 ? `<span class="px-2.5 py-1 rounded-full bg-error-container text-on-error-container text-xs font-bold">${overdueDays}d Overdue</span>`
-                                : `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Active</span>`}
+                                : `<span class="px-2.5 py-1 rounded-full bg-teal-blue/10 text-teal-blue text-xs font-semibold">Active</span>`}
                         </div>
                     </div>`;
                 }).join('');
@@ -531,7 +531,7 @@
                             <p class="font-semibold text-deep-pine text-sm">${l.books?.title || 'Unknown Book'}</p>
                             <p class="text-xs mt-2 text-dusty-rose">Borrowed: ${new Date(l.created_at).toLocaleDateString()} · Returned: ${l.return_date ? new Date(l.return_date).toLocaleDateString() : '—'}</p>
                         </div>
-                        <div><span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">Returned</span></div>
+                        <div><span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-semibold">Returned</span></div>
                     </div>`).join('');
             }
 

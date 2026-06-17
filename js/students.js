@@ -18,10 +18,10 @@ async function renderStudents(filter = '') {
         const statusBadge = hasOverdue
             ? '<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-wider">Overdue</span>'
             : s.activeLoans > 0
-            ? '<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider">Active Loan</span>'
+            ? '<span class="px-2 py-0.5 rounded bg-teal-blue/10 text-teal-blue text-[10px] font-bold uppercase tracking-wider">Active Loan</span>'
             : s.reservationCount > 0
-            ? '<span class="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-bold uppercase tracking-wider">Reserved</span>'
-            : '<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">No Bookings</span>';
+            ? '<span class="px-2 py-0.5 rounded bg-surface-container-high text-deep-pine text-[10px] font-bold uppercase tracking-wider">Reserved</span>'
+            : '<span class="px-2 py-0.5 rounded bg-surface-variant text-sage-green text-[10px] font-bold uppercase tracking-wider">No Bookings</span>';
 
         const initials = (s.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         return `<div onclick="viewStudentDetails('${s.id}')" class="grid grid-cols-8 px-md py-3 items-center text-sm hover:bg-surface-container-low cursor-pointer transition-colors ${hasOverdue ? 'bg-error-container/20' : ''}">
@@ -44,7 +44,7 @@ async function renderStudents(filter = '') {
             
             <div class="flex items-center justify-end gap-2 text-right">
                 <button onclick="event.stopPropagation(); openEditStudentModal('${s.id}')" class="p-1 rounded-md text-teal-blue hover:bg-teal-blue/10 transition-colors" title="Edit Student"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-                <button onclick="event.stopPropagation(); suspendStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-slate-500 hover:bg-slate-100 transition-colors" title="Suspend Student"><span class="material-symbols-outlined text-[18px]">person_off</span></button>
+                <button onclick="event.stopPropagation(); suspendStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-sage-green hover:bg-surface-variant transition-colors" title="Suspend Student"><span class="material-symbols-outlined text-[18px]">person_off</span></button>
                 <button onclick="event.stopPropagation(); deleteStudent('${s.id}', '${(s.full_name || '').replace(/'/g, "\\'")}')" class="p-1 rounded-md text-error hover:bg-error/10 transition-colors" title="Delete Student"><span class="material-symbols-outlined text-[18px]">delete_forever</span></button>
             </div>
         </div>`;
@@ -198,7 +198,20 @@ function closeAddStudentModal() {
     document.getElementById('add-student-form').reset();
 }
 
-async function submitAddStudent() {
+async // Simple SHA-256 hashing utility (for demonstration only)
+// Returns hex string of the hashed password.
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  // Convert buffer to hex string
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+// Expose globally for other scripts
+window.hashPassword = hashPassword;
     const fullName = document.getElementById('add-full-name').value.trim();
     const userIdInput = document.getElementById('add-user-id').value.trim();
     const password = document.getElementById('add-password').value;
@@ -208,56 +221,44 @@ async function submitAddStudent() {
     
     if (!fullName || !userIdInput || !password) return;
     
-    const usernameNormalized = userIdInput.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-    const authIdentifier = `${usernameNormalized}@student.scholarly.app`;
-    const finalLibId = libId || usernameNormalized;
+    // Extract username, ignoring any email domain provided
+    let rawUsername = userIdInput;
+    if (rawUsername.includes('@')) {
+        rawUsername = rawUsername.split('@')[0];
+    }
+    const usernameNormalized = rawUsername.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+    const finalLibId = libId || userIdInput;
     
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span> Creating...';
     statusMsg.classList.add('hidden');
     
     try {
-        // Create a temporary client that DOES NOT persist session 
-        // This prevents the librarian from being logged out when creating another user
-        const tempClient = window.supabase.createClient(
-            SUPABASE_URL, 
-            SUPABASE_ANON_KEY, 
-            { auth: { persistSession: false, autoRefreshToken: false } }
-        );
+        const studentId = crypto.randomUUID();
+        const hashedPassword = await window.hashPassword(password);
 
-        const { data, error } = await tempClient.auth.signUp({
-            email: authIdentifier,
-            password: password,
-            options: {
-                data: {
-                    full_name: fullName,
-                    role: 'student',
-                    library_id: finalLibId
-                }
-            }
+        const { error: dbError } = await window.sbClient.from('library_users').insert({
+            id: studentId,
+            full_name: fullName,
+            role: 'student',
+            library_id: finalLibId
         });
-        
-        if (error) throw error;
+        if (dbError) throw dbError;
+
+        const { error: credError } = await window.sbClient.from('student_credentials').insert({
+            user_id: studentId,
+            username: userIdInput,
+            password_hash: hashedPassword
+        });
+        if (credError) throw credError;
         
         statusMsg.textContent = 'Student created successfully!';
-        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-blue-100 text-blue-800';
-        statusMsg.classList.remove('hidden');
-        
-        // The newly created user is in data.user, but we should fetch them properly to get the DB record
-        // Give the database trigger a moment to insert into library_users
-        setTimeout(async () => {
-            const { data: newStudent } = await window.sbClient.from('library_users').select('*').eq('id', data.user.id).single();
-            
-            const studentRecord = newStudent || {
-                id: data.user.id,
-                full_name: fullName,
-                role: 'student',
-                library_id: libId,
-                created_at: new Date().toISOString()
-            };
-
+        statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-teal-blue/10 text-teal-blue';
+        // After successful inserts, fetch the new student record and update UI
+        const { data: newStudent } = await window.sbClient.from('library_users').select('*').eq('id', studentId).single();
+        if (newStudent) {
             allStudents.push({
-                ...studentRecord,
+                ...newStudent,
                 activeLoans: 0,
                 overdueCount: 0,
                 reservationCount: 0,
@@ -267,15 +268,19 @@ async function submitAddStudent() {
             });
             document.getElementById('student-count').textContent = `${allStudents.length} student${allStudents.length !== 1 ? 's' : ''}`;
             renderStudents(document.getElementById('student-search').value);
-            
             setTimeout(() => {
                 closeAddStudentModal();
             }, 1000);
-        }, 500);
+        }
+        
         
     } catch (err) {
         console.error(err);
-        statusMsg.textContent = 'Error creating student: ' + err.message;
+        let customMsg = err.message;
+        if (customMsg && customMsg.toLowerCase().includes('rate limit')) {
+            customMsg = 'email rate limit exceeded. Please wait a while before adding more students or disable email verification in Supabase.';
+        }
+        statusMsg.textContent = 'Error creating student: ' + customMsg;
         statusMsg.className = 'mb-2 p-sm rounded-lg font-body-sm text-body-sm text-center bg-error-container text-on-error-container';
         statusMsg.classList.remove('hidden');
     } finally {
@@ -526,7 +531,7 @@ async function viewStudentDetails(studentId) {
                     <div>
                         ${isOverdue 
                             ? `<span class="px-2.5 py-1 rounded-full bg-error-container text-on-error-container text-xs font-bold">${overdueDays}d Overdue</span>`
-                            : `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">Active</span>`}
+                            : `<span class="px-2.5 py-1 rounded-full bg-teal-blue/10 text-teal-blue text-xs font-semibold">Active</span>`}
                     </div>
                 </div>`;
             }).join('');
@@ -547,7 +552,7 @@ async function viewStudentDetails(studentId) {
                         <p class="text-xs mt-2 text-dusty-rose">Borrowed: ${new Date(l.created_at).toLocaleDateString()} · Returned: ${returnDateStr}</p>
                     </div>
                     <div>
-                        <span class="px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">Returned</span>
+                        <span class="px-2.5 py-1 rounded-full bg-surface-container-high text-sage-green text-xs font-semibold">Returned</span>
                     </div>
                 </div>`;
             }).join('');
