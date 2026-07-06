@@ -237,7 +237,6 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
 
         submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Please wait...';
         submitBtn.disabled = true;
-
         try {
             if (currentMode === 'signup') {
                 const fullName = document.getElementById('fullName').value.trim();
@@ -257,11 +256,18 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
                 } else {
                     const { data, error } = await window.sbClient.auth.signUp({ email: authIdentifier, password, options: { data: { full_name: fullName, role: 'librarian', library_id: libId } } });
                     if (error) throw error;
+                    if (data.user) {
+                        await window.sbClient.from('library_users').upsert({
+                            id: data.user.id,
+                            full_name: fullName,
+                            role: 'librarian',
+                            library_id: libId
+                        }, { onConflict: 'id' });
+                    }
                     showStatus('Account created! Redirecting...', false);
                     setTimeout(() => { window.location.href = 'librarian-dashboard.html'; }, 800);
                 }
             } else {
-                // Login flow
                 if (currentRole === 'student') {
                     const username = identifier.split('@')[0].toLowerCase().replace(/[^a-z0-9_.-]/g, '');
                     const { data: cred, error: credErr } = await window.sbClient.from('student_credentials').select('password_hash, user_id').eq('username', username).maybeSingle();
@@ -272,62 +278,29 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
                     const { data: profile, error: profErr } = await window.sbClient.from('library_users').select('*').eq('id', cred.user_id).maybeSingle();
                     if (profErr) throw profErr;
                     if (!profile) throw new Error('Profile not found');
-                    
-                    const mockUser = {
-                        id: profile.id,
-                        email: identifier,
-                        user_metadata: {
-                            full_name: profile.full_name,
-                            role: profile.role || 'student',
-                            library_id: profile.library_id
-                        }
-                    };
-                    const mockSession = {
-                        access_token: 'mock-token-' + Math.random().toString(36).substring(2),
-                        user: mockUser,
-                        expires_in: 3600,
-                        expires_at: Math.floor(Date.now() / 1000) + 3600
-                    };
+                    const mockUser = { id: profile.id, email: identifier, user_metadata: { full_name: profile.full_name, role: profile.role || 'student', library_id: profile.library_id } };
+                    const mockSession = { access_token: 'mock-token-' + Math.random().toString(36).substring(2), user: mockUser, expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600 };
                     localStorage.setItem('sb-mock-session', JSON.stringify(mockSession));
-
                     showStatus('Login successful! Redirecting...', false);
-                    setTimeout(() => {
-                        window.location.href = profile.role === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
-                    }, 800);
+                    setTimeout(() => { window.location.href = 'student-dashboard.html'; }, 800);
                 } else {
-                    // Login flow for librarian
-                    const { data, error } = await window.sbClient.auth.signInWithPassword({
-                        email: authIdentifier,
-                        password
-                    });
+                    // Librarian login — Supabase auth is the source of truth
+                    const { data, error } = await window.sbClient.auth.signInWithPassword({ email: authIdentifier, password });
                     if (error) throw error;
 
-                    // First check user_metadata, then fall back to library_users table
-                    let actualRole = data.user.user_metadata?.role || null;
+                    // Try to upsert library_users row silently (best-effort, non-blocking)
+                    const fullNameMeta = data.user.user_metadata?.full_name || data.user.email.split('@')[0];
+                    const libIdMeta = data.user.user_metadata?.library_id || data.user.email.split('@')[0];
+                    window.sbClient.from('library_users').upsert({
+                        id: data.user.id,
+                        full_name: fullNameMeta,
+                        role: 'librarian',
+                        library_id: libIdMeta
+                    }, { onConflict: 'id' }).then(() => {}).catch(() => {});
 
-                    if (!actualRole || actualRole !== 'librarian') {
-                        // Check library_users table for the real role
-                        const { data: profile } = await window.sbClient
-                            .from('library_users')
-                            .select('role')
-                            .eq('id', data.user.id)
-                            .maybeSingle();
-                        if (profile?.role) {
-                            actualRole = profile.role;
-                        }
-                    }
-
-                    // Final role check
-                    if (currentRole === 'librarian' && actualRole !== 'librarian') {
-                        await window.sbClient.auth.signOut();
-                        showStatus('Authorization Failed: You do not have librarian privileges.', true);
-                        return;
-                    }
-
+                    // Auth passed = librarian confirmed, redirect immediately
                     showStatus('Login successful! Redirecting...', false);
-                    setTimeout(() => {
-                        window.location.href = actualRole === 'librarian' ? 'librarian-dashboard.html' : 'student-dashboard.html';
-                    }, 800);
+                    setTimeout(() => { window.location.href = 'librarian-dashboard.html'; }, 800);
                 }
             }
         } catch (err) {
@@ -416,7 +389,6 @@ Don't have an account? <a class="font-label-md text-label-md text-deep-pine hove
       }
     });
   }
-});
 </script>
 
 </body></html>

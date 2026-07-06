@@ -320,24 +320,29 @@
 
     // Modal controls
     function openAddBookModal() {
-        document.getElementById('add-book-modal').style.display = 'flex';
+        const modal = document.getElementById('add-book-modal');
+        if (modal) modal.classList.remove('hidden');
     }
     function closeAddBookModal() {
-        document.getElementById('add-book-modal').style.display = 'none';
+        const modal = document.getElementById('add-book-modal');
+        if (modal) modal.classList.add('hidden');
         document.getElementById('add-book-form').reset();
     }
     function openManageUsersModal() {
-        document.getElementById('manage-users-modal').style.display = 'flex';
+        const modal = document.getElementById('manage-users-modal');
+        if (modal) modal.classList.remove('hidden');
         loadUsers();
     }
     function closeManageUsersModal() {
-        document.getElementById('manage-users-modal').style.display = 'none';
+        const modal = document.getElementById('manage-users-modal');
+        if (modal) modal.classList.add('hidden');
     }
 
     // Close modals on backdrop click
     document.addEventListener('click', (e) => {
         if (e.target.id === 'add-book-modal') closeAddBookModal();
         if (e.target.id === 'manage-users-modal') closeManageUsersModal();
+        if (e.target.id === 'student-detail-modal') closeStudentDetailModal();
     });
 
     // Add Book form submission
@@ -434,7 +439,8 @@
     }
 
     function closeStudentDetailModal() {
-        document.getElementById('student-detail-modal').style.display = 'none';
+        const modal = document.getElementById('student-detail-modal');
+        if (modal) modal.classList.add('hidden');
     }
 
     function switchDetailTab(tabName) {
@@ -476,7 +482,7 @@
         document.getElementById('panel-det-reservations').innerHTML = '<p class="text-center text-dusty-rose py-8">Loading...</p>';
 
         const modal = document.getElementById('student-detail-modal');
-        modal.style.display = 'flex';
+        if (modal) modal.classList.remove('hidden');
         switchDetailTab('loans');
 
         try {
@@ -552,79 +558,72 @@
     }
 
     async function loadLibrarianPortal() {
-        // Fetch Total Books
-        const { count: totalBooks } = await window.sbClient.from('books').select('*', { count: 'exact', head: true });
-        document.getElementById('stat-total-books').innerText = totalBooks || 0;
+        const nowIso = new Date().toISOString();
+        const timeoutHelper = window.withTimeout || (async (p) => p);
 
-        // Fetch Active Borrows
-        const { count: activeLoans } = await window.sbClient.from('loans').select('*', { count: 'exact', head: true }).eq('status', 'active');
-        document.getElementById('stat-active-loans').innerText = activeLoans || 0;
+        try {
+            // Trigger all queries in parallel
+            const [totalBooksRes, activeLoansRes, overdueLoansRes, recentLoansRes, overdueItemsRes] = await Promise.all([
+                timeoutHelper(window.sbClient.from('books').select('*', { count: 'exact', head: true }), 3000, { count: 0, error: null }),
+                timeoutHelper(window.sbClient.from('loans').select('*', { count: 'exact', head: true }).eq('status', 'active'), 3000, { count: 0, error: null }),
+                timeoutHelper(window.sbClient.from('loans').select('*', { count: 'exact', head: true }).eq('status', 'active').lt('due_date', nowIso), 3000, { count: 0, error: null }),
+                timeoutHelper(window.sbClient.from('loans').select('*, books(title, isbn), library_users(full_name)').order('borrow_date', { ascending: false }).limit(5), 3000, { data: [], error: null }),
+                timeoutHelper(window.sbClient.from('loans').select('*, books(title), library_users(full_name)').eq('status', 'active').lt('due_date', nowIso).order('due_date', { ascending: true }).limit(5), 3000, { data: [], error: null })
+            ]);
 
-        // Fetch Overdue Loans
-        const { count: overdueLoans } = await window.sbClient
-            .from('loans')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'active')
-            .lt('due_date', new Date().toISOString());
-        document.getElementById('stat-overdue-loans').innerText = overdueLoans || 0;
+            const totalBooks = totalBooksRes.count || 0;
+            const activeLoans = activeLoansRes.count || 0;
+            const overdueLoans = overdueLoansRes.count || 0;
+            const recentLoans = recentLoansRes.data || [];
+            const overdueItems = overdueItemsRes.data || [];
 
-        // Fetch Recent Transactions
-        const { data: recentLoans } = await window.sbClient
-            .from('loans')
-            .select('*, books(title, isbn), library_users(full_name)')
-            .order('borrow_date', { ascending: false })
-            .limit(5);
+            // Update Metrics UI
+            document.getElementById('stat-total-books').innerText = totalBooks;
+            document.getElementById('stat-active-loans').innerText = activeLoans;
+            document.getElementById('stat-overdue-loans').innerText = overdueLoans;
 
-        const txList = document.getElementById('recent-transactions-list');
-        if (recentLoans && recentLoans.length > 0) {
-            txList.innerHTML = recentLoans.map(loan => `
-                <tr class="hover:bg-surface-container-low/50 transition-colors">
-                    <td class="py-3 px-md">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-12 bg-surface-dim rounded border border-dusty-rose/20 flex-shrink-0 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-dusty-rose text-[20px]">menu_book</span>
+            // Update Recent Transactions UI
+            const txList = document.getElementById('recent-transactions-list');
+            if (recentLoans && recentLoans.length > 0) {
+                txList.innerHTML = recentLoans.map(loan => `
+                    <tr class="hover:bg-surface-container-low/50 transition-colors">
+                        <td class="py-3 px-md">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-12 bg-surface-dim rounded border border-dusty-rose/20 flex-shrink-0 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-dusty-rose text-[20px]">menu_book</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-on-surface">${loan.books?.title || 'Unknown'}</p>
+                                    <p class="text-xs text-dusty-rose">ISBN: ${loan.books?.isbn || 'N/A'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="font-semibold text-on-surface">${loan.books?.title || 'Unknown'}</p>
-                                <p class="text-xs text-dusty-rose">ISBN: ${loan.books?.isbn || 'N/A'}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3 px-md">${loan.library_users?.full_name || 'Unknown User'}</td>
-                    <td class="py-3 px-md">
-                        <span class="inline-flex items-center gap-1 font-label-md px-2 py-0.5 rounded ${
-                            loan.status === 'active' 
-                                ? (new Date(loan.due_date) < new Date() ? 'text-error bg-error/10' : 'text-teal-blue bg-teal-blue/10')
-                                : 'text-sage-green bg-sage-green/10'
-                        }">
-                            <span class="material-symbols-outlined text-[16px]">${
+                        </td>
+                        <td class="py-3 px-md">${loan.library_users?.full_name || 'Unknown User'}</td>
+                        <td class="py-3 px-md">
+                            <span class="inline-flex items-center gap-1 font-label-md px-2 py-0.5 rounded ${
                                 loan.status === 'active' 
-                                    ? (new Date(loan.due_date) < new Date() ? 'warning' : 'arrow_upward')
-                                    : 'check_circle'
-                            }</span> ${
-                                loan.status === 'active' 
-                                    ? (new Date(loan.due_date) < new Date() ? 'Overdue' : 'Borrowed')
-                                    : 'Returned'
-                            }
-                        </span>
-                    </td>
-                    <td class="py-3 px-md text-dusty-rose">${new Date(loan.borrow_date).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        } else {
-            txList.innerHTML = '<tr><td colspan="4" class="py-3 px-md text-center text-dusty-rose">No recent transactions.</td></tr>';
-        }
+                                    ? (new Date(loan.due_date) < new Date() ? 'text-error bg-error/10' : 'text-teal-blue bg-teal-blue/10')
+                                    : 'text-sage-green bg-sage-green/10'
+                            }">
+                                <span class="material-symbols-outlined text-[16px]">${
+                                    loan.status === 'active' 
+                                        ? (new Date(loan.due_date) < new Date() ? 'warning' : 'arrow_upward')
+                                        : 'check_circle'
+                                }</span> ${
+                                    loan.status === 'active' 
+                                        ? (new Date(loan.due_date) < new Date() ? 'Overdue' : 'Borrowed')
+                                        : 'Returned'
+                                }
+                            </span>
+                        </td>
+                        <td class="py-3 px-md text-dusty-rose">${new Date(loan.borrow_date).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+            } else {
+                txList.innerHTML = '<tr><td colspan="4" class="py-3 px-md text-center text-dusty-rose">No recent transactions.</td></tr>';
+            }
 
-        // Overdue alerts list
-        if (overdueLoans && overdueLoans > 0) {
-            const { data: overdueItems } = await window.sbClient
-                .from('loans')
-                .select('*, books(title), library_users(full_name)')
-                .eq('status', 'active')
-                .lt('due_date', new Date().toISOString())
-                .order('due_date', { ascending: true })
-                .limit(5);
-
+            // Update Overdue Alerts UI
             const alertsList = document.getElementById('overdue-alerts-list');
             if (overdueItems && overdueItems.length > 0) {
                 alertsList.innerHTML = overdueItems.map(item => {
@@ -639,7 +638,11 @@
                         </div>
                     `;
                 }).join('');
+            } else {
+                alertsList.innerHTML = '<p class="text-center text-dusty-rose text-sm py-4 font-body-sm">No overdue alerts found.</p>';
             }
+        } catch (err) {
+            console.error('Librarian dashboard load failed:', err);
         }
     }
 

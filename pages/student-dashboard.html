@@ -10,6 +10,23 @@
 <script src="../js/nav.js"></script>
 <script src="../js/notifications.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+@keyframes dropInNotification {
+    0%   { transform: translateY(-20px) scale(0.95); opacity: 0; }
+    60%  { transform: translateY(4px) scale(1.01); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes phonePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(20, 83, 45, 0.5); }
+    50%       { box-shadow: 0 0 0 12px rgba(20, 83, 45, 0); }
+}
+.push-notif-card {
+    animation: dropInNotification 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.phone-ring {
+    animation: phonePulse 1.8s ease-in-out infinite;
+}
+</style>
 
 </head>
 <body class="bg-soft-parchment text-deep-pine font-body-md antialiased flex">
@@ -88,27 +105,202 @@
 </div>
 
 <!-- Payment Modal -->
-<div id="payment-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-dusty-rose/20 overflow-hidden">
-        <div class="bg-error-container/20 p-md flex justify-between items-center border-b border-error/10">
-            <h2 class="font-headline-md text-error font-bold flex items-center gap-2">
-                <span class="material-symbols-outlined">payments</span> Overdue Penalty
+<div id="payment-modal" style="display:none;" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-start justify-center pt-16">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 flex flex-col" style="max-height:85vh; overflow-y:auto;">
+        <div class="bg-red-50 p-4 flex justify-between items-center border-b border-red-100 rounded-t-2xl">
+            <h2 class="font-headline-md text-red-700 font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">payments</span> Library Fine Payment
             </h2>
-            <button onclick="closePaymentModal()" class="text-dusty-rose hover:text-error p-1 rounded-lg transition-colors">
+            <button onclick="closePaymentModal()" class="text-gray-400 hover:text-red-600 p-1 rounded-lg transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div class="p-lg flex flex-col gap-md text-center">
-            <p class="font-body-md text-dusty-rose">To return this book, you must pay the accumulated late fine.</p>
-            <div class="text-4xl font-bold text-deep-pine my-4" id="fine-amount-display">0 FRW</div>
-            <p class="font-body-sm text-dusty-rose bg-surface-container-low p-3 rounded-lg border border-dusty-rose/10">
-                Mock Payment Gateway Simulation.<br/> Clicking Confirm will process a mock payment.
-            </p>
-            <button id="confirm-payment-btn" class="w-full py-3 bg-teal-blue hover:bg-secondary text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
-                Confirm Payment
-            </button>
+        <div class="p-6 flex flex-col gap-4">
+            <!-- Screen 1: Payment Input -->
+            <div id="payment-screen-input" class="flex flex-col gap-4">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Fine Due</p>
+                    <div class="text-4xl font-bold text-gray-800 my-1" id="fine-amount-display">0 FRW</div>
+                    <div class="text-xs bg-green-50 text-green-700 font-semibold py-1 px-3 rounded-full inline-block mt-1">
+                        Recipient: 0799361513
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-700" for="custom-pay-amount">Amount You Are Paying (FRW) *</label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3 text-gray-400 font-mono text-sm font-bold">FRW</span>
+                        <input id="custom-pay-amount" type="number" min="1" oninput="updateChangePreview(); updateWalletBalanceIndicator();" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-4 text-gray-800 outline-none focus:border-teal-500 text-lg font-bold" style="padding-left: 3.5rem;" placeholder="Enter amount..." />
+                    </div>
+                    <div id="change-preview" class="hidden mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2"></div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-gray-700 mb-2 block">Select Payment Method</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectPaymentMethod('momo')" id="btn-pay-momo" class="py-3 px-1 rounded-xl border-2 border-yellow-400 bg-yellow-50 text-yellow-700 flex flex-col items-center justify-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-xl">phone_android</span>
+                            <span class="text-[10px] font-bold">MTN MoMo</span>
+                        </button>
+                        <button onclick="selectPaymentMethod('bk')" id="btn-pay-bk" class="py-3 px-1 rounded-xl border-2 border-gray-200 hover:border-blue-300 flex flex-col items-center justify-center gap-1 transition-all text-gray-600">
+                            <span class="material-symbols-outlined text-xl">account_balance</span>
+                            <span class="text-[10px] font-bold">BK Bank</span>
+                        </button>
+                        <button onclick="selectPaymentMethod('equity')" id="btn-pay-equity" class="py-3 px-1 rounded-xl border-2 border-gray-200 hover:border-red-300 flex flex-col items-center justify-center gap-1 transition-all text-gray-600">
+                            <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+                            <span class="text-[10px] font-bold">Equity Bank</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="form-pay-momo" class="payment-form flex flex-col gap-2">
+                    <label class="text-xs text-gray-600" for="momo-phone">MTN MoMo Phone Number *</label>
+                    <input id="momo-phone" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-yellow-400" placeholder="e.g. 0799361513 or +250799361513" type="tel" maxlength="15" oninput="updateWalletBalanceIndicator()" />
+                </div>
+                <div id="form-pay-bk" class="payment-form flex flex-col gap-2 hidden">
+                    <label class="text-xs text-gray-600" for="bk-account">BK Account or Phone Number *</label>
+                    <input id="bk-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-blue-400" placeholder="e.g. 078XXXXXXX or Account number" type="text" oninput="updateWalletBalanceIndicator()" />
+                </div>
+                <div id="form-pay-equity" class="payment-form flex flex-col gap-2 hidden">
+                    <label class="text-xs text-gray-600" for="equity-account">Equity Account or Phone Number *</label>
+                    <input id="equity-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-red-400" placeholder="e.g. 1012XXXXXXXX or Phone number" type="text" oninput="updateWalletBalanceIndicator()" />
+                </div>
+
+                <div id="wallet-balance-indicator" class="hidden mt-1 text-xs font-semibold py-2 px-3 rounded-xl flex items-center gap-2"></div>
+
+                <button id="confirm-payment-btn" onclick="startPaymentCheckout()" class="mt-2 w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-lg">phone_android</span> Pay via MTN MoMo
+                </button>
+            </div>
+
+            <!-- Screen 2: Processing Spinner -->
+            <div id="payment-screen-processing" class="flex flex-col items-center justify-center py-12 gap-4" style="display:none !important;">
+                <div class="w-16 h-16 border-4 border-yellow-200 border-t-yellow-500 rounded-full animate-spin"></div>
+                <div class="text-center">
+                    <h3 class="font-semibold text-gray-800" id="processing-title">Connecting to Gateway...</h3>
+                    <p class="text-sm text-gray-500 mt-1" id="processing-subtitle">Initiating secure transaction...</p>
+                </div>
+            </div>
+
+            <!-- Screen 3: WhatsApp OTP Verification -->
+            <div id="payment-screen-otp" class="flex flex-col gap-5" style="display:none;">
+                <div class="text-center">
+                    <div style="width:56px;height:56px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 8px 24px rgba(37,211,102,0.35);">
+                        <svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </div>
+                    <h3 style="font-size:16px;font-weight:800;color:#111827;margin-bottom:4px;">WhatsApp Verification Required</h3>
+                    <p style="font-size:12px;color:#6b7280;line-height:1.5;">A 6-digit code has been sent to your WhatsApp. Enter it below to confirm your payment and return the book.</p>
+                </div>
+
+                <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                    <svg viewBox="0 0 24 24" fill="#16a34a" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <div>
+                        <div style="font-size:10px;color:#15803d;font-weight:700;">CODE SENT VIA WHATSAPP</div>
+                        <div style="font-size:12px;color:#166534;font-weight:600;">Sent to: <span id="otp-sent-phone" style="font-family:monospace;">your number</span></div>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <label style="font-size:11px;font-weight:700;color:#374151;">Enter 6-Digit Verification Code</label>
+                    <div style="display:flex;gap:8px;justify-content:center;">
+                        <input id="otp-d1" maxlength="1" type="tel" oninput="otpAutoTab(this,'otp-d2')" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                        <input id="otp-d2" maxlength="1" type="tel" oninput="otpAutoTab(this,'otp-d3')" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                        <input id="otp-d3" maxlength="1" type="tel" oninput="otpAutoTab(this,'otp-d4')" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                        <input id="otp-d4" maxlength="1" type="tel" oninput="otpAutoTab(this,'otp-d5')" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                        <input id="otp-d5" maxlength="1" type="tel" oninput="otpAutoTab(this,'otp-d6')" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                        <input id="otp-d6" maxlength="1" type="tel" oninput="otpAutoTab(this,null)" style="width:44px;height:52px;border:2px solid #d1d5db;border-radius:12px;text-align:center;font-size:22px;font-weight:800;color:#111827;outline:none;background:#f9fafb;transition:border-color 0.2s;" onfocus="this.style.borderColor='#25D366'" onblur="this.style.borderColor='#d1d5db'" />
+                    </div>
+                    <div id="otp-error-msg" style="display:none;color:#dc2626;font-size:11px;font-weight:600;text-align:center;margin-top:4px;">❌ Incorrect code. Please check your WhatsApp and try again.</div>
+                </div>
+
+                <button id="wa-open-btn" onclick="openWhatsAppChat()" style="width:100%;padding:12px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-weight:800;font-size:13px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,0.4);">
+                    <svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Open WhatsApp to Get Code
+                </button>
+
+                <button onclick="verifyOTPAndComplete()" style="width:100%;padding:14px;background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:800;font-size:14px;border-radius:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(5,150,105,0.4);">
+                    <span class="material-symbols-outlined" style="font-size:18px;">verified</span>
+                    Verify & Complete Payment
+                </button>
+
+                <button onclick="resetPaymentScreens()" style="width:100%;padding:10px;background:none;border:1px solid #e5e7eb;border-radius:10px;color:#6b7280;font-size:12px;font-weight:600;cursor:pointer;">← Cancel &amp; Go Back</button>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- ====== PUSH NOTIFICATION OVERLAY ====== -->
+<div id="push-notif-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; gap:16px;" class="push-overlay-bg">
+    <p style="color:#d1fae5; font-size:13px; font-weight:600; text-align:center; margin-bottom:4px;">
+        📲 Push notification sent to <span id="sent-to-phone" style="color:#fff; font-weight:700;">your number</span>
+    </p>
+    <div class="phone-mockup-wrap" style="width:240px; border:6px solid #1e293b; border-radius:40px; background:linear-gradient(160deg,#0f172a 0%,#1e293b 100%); box-shadow:0 25px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; height:420px; overflow:visible;">
+        <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:80px; height:22px; background:#0f172a; border-radius:0 0 16px 16px; z-index:5;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:28px 16px 4px; z-index:4;">
+            <span id="phone-number-display" style="font-size:9px; color:#94a3b8; font-family:monospace; font-weight:700;">+250...</span>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <span style="font-size:9px; color:#94a3b8; font-family:monospace;">4G</span>
+                <span class="material-symbols-outlined" style="font-size:11px; color:#94a3b8;">signal_cellular_alt</span>
+                <span class="material-symbols-outlined" style="font-size:11px; color:#94a3b8;">battery_5_bar</span>
+            </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; margin:8px 0 12px;">
+            <span id="phone-clock" style="color:#fff; font-weight:800; font-size:42px; letter-spacing:-2px; line-height:1;">--:--</span>
+            <span id="phone-date" style="color:#64748b; font-size:10px; margin-top:4px;">Loading...</span>
+        </div>
+        <!-- Stack of notifications -->
+        <div style="margin:0 10px; display:flex; flex-direction:column; gap:6px; overflow:visible;">
+            <!-- Card 1: MoMo/Bank payment push -->
+            <div class="push-notif-card" style="border-radius:14px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.35);">
+                <div id="push-provider-header" style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:linear-gradient(135deg,#FFCC00,#FF8C00);">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:#fff; font-variation-settings:'FILL' 1;">notifications_active</span>
+                    <div style="flex:1;">
+                        <div id="prompt-app-title" style="font-size:10px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">MTN MoMo</div>
+                        <div style="font-size:8px; color:rgba(255,255,255,0.85);">Payment Authorization Request</div>
+                    </div>
+                    <div style="font-size:8px; color:rgba(255,255,255,0.7); font-family:monospace;">now</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.97); padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+                    <p style="font-size:10px; color:#374151; line-height:1.5; margin:0;">
+                        Pay <strong id="approval-amount-display" style="color:#059669; font-size:12px;">0 FRW</strong>
+                        to <strong style="color:#111827;">0799361513</strong>
+                        <span style="color:#6b7280;">(Library Fine)</span><br/>
+                        From: <strong id="payer-phone-display" style="color:#111827;">your phone</strong>
+                    </p>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="declinePushPayment()" style="flex:1; padding:7px 4px; border-radius:8px; background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:3px;">
+                            <span class="material-symbols-outlined" style="font-size:12px;">cancel</span> Decline
+                        </button>
+                        <button onclick="approvePushPayment()" style="flex:1; padding:7px 4px; border-radius:8px; background:#059669; color:#fff; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:3px; box-shadow:0 3px 10px rgba(5,150,105,0.4);">
+                            <span class="material-symbols-outlined" style="font-size:12px;">check_circle</span> Approve
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: WhatsApp OTP notification -->
+            <div id="wa-notif-card" style="border-radius:14px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.35); display:none;">
+                <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:linear-gradient(135deg,#25D366,#128C7E);">
+                    <svg viewBox="0 0 24 24" fill="white" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    <div style="flex:1;">
+                        <div style="font-size:10px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">WhatsApp</div>
+                        <div style="font-size:8px; color:rgba(255,255,255,0.85);">Library Payment Code</div>
+                    </div>
+                    <div style="font-size:8px; color:rgba(255,255,255,0.7); font-family:monospace;">now</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.97); padding:10px 12px;">
+                    <p style="font-size:10px; color:#374151; line-height:1.6; margin:0;">Your library fine payment code is: <strong id="wa-notif-otp" style="color:#25D366; font-size:14px; font-family:monospace; letter-spacing:2px;">------</strong><br/><span style="font-size:9px; color:#6b7280;">Valid for this session only. Do not share.</span></p>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; margin-top:auto; padding-bottom:16px;">
+            <span class="material-symbols-outlined" style="font-size:18px; color:#475569;">swipe_up</span>
+            <span style="font-size:9px; color:#475569;">Swipe up to unlock</span>
+        </div>
+    </div>
+    <button onclick="resetPaymentScreens()" style="color:#fca5a5; font-size:12px; font-weight:600; background:none; border:none; cursor:pointer; margin-top:8px;">
+        ← Go back &amp; change details
+    </button>
 </div>
 <script>
     const coverImages = [
@@ -119,6 +311,434 @@
         'https://lh3.googleusercontent.com/aida-public/AB6AXuD_u-4ie0KdXR4_-sCzSHfqL9BewE0cnY73LgdM9gFtef2qV6rMf7p7PEhz-HIh6BHB5UlDKnNmzBwg4XEPpKsGIjvmokH0Z6QfRsWtG0hfIpt2lO0zBLLBS1RhrIFomkqM5mE9NTEgt5UhHYH1FCp2D7TRVeu9k9XyVYOYYSNTjAOXdIcAT1ncdD04puZ69m4dqDTk3tX8V0eT_Amf2_h7f-m8pkTi_1Vyy7TDuldZ_ZDOkMlIzejH5rUPgmniozK-929435FaQTM',
         'https://lh3.googleusercontent.com/aida-public/AB6AXuBSqOJ-q10QHihXxzCMLB85cYrEt44FhidW6V92uCFDGMbdMvwL1k8zie8e-neEah_mtGA1XirFrRdG5Cgib_RqQaHb4hPmlQd50ABRbi0AF125zjhvbwoIJNTHAHaOccLU86_Q0R38fshvuUUP_XTNLFAKD3SxEuDbxFAycySxeu1C5wcVObLO02V1rLicSojx-NVKTAzZQwTfSjNxxYRCw0s2CVLBkvI0VR-Gph2aTh6wmfr2rV9UVXz6FEou14rsnsYIDP2-XjQ'
     ];
+
+    // Mock Wallet System to simulate telecom/bank balances
+    const MockWalletSystem = {
+        getWallets() {
+            let w = localStorage.getItem('mock_wallets');
+            if (!w) {
+                const seed = {
+                    "momo:0799361513": 50000, // Merchant
+                    "momo:0788123456": 15000, // Rich MoMo
+                    "momo:0788999999": 1000,  // Low MoMo
+                    "momo:0788000000": 0,     // Zero MoMo
+                    "bk:123456": 20000,       // BK account
+                    "bk:999999": 500,         // Low BK account
+                    "equity:123456": 25000,   // Equity account
+                    "equity:999999": 800      // Low Equity
+                };
+                localStorage.setItem('mock_wallets', JSON.stringify(seed));
+                return seed;
+            }
+            return JSON.parse(w);
+        },
+        
+        getBalance(method, account) {
+            const wallets = this.getWallets();
+            const key = `${method}:${account}`;
+            if (wallets[key] !== undefined) {
+                return wallets[key];
+            }
+            // If unknown account, initialize with a default starting balance of 8000 FRW
+            wallets[key] = 8000;
+            localStorage.setItem('mock_wallets', JSON.stringify(wallets));
+            return 8000;
+        },
+        
+        setBalance(method, account, amount) {
+            const wallets = this.getWallets();
+            const key = `${method}:${account}`;
+            wallets[key] = amount;
+            localStorage.setItem('mock_wallets', JSON.stringify(wallets));
+        },
+        
+        hasEnough(method, account, amount) {
+            return this.getBalance(method, account) >= amount;
+        },
+        
+        transfer(fromMethod, fromAccount, toMethod, toAccount, amount) {
+            const fromBal = this.getBalance(fromMethod, fromAccount);
+            const toBal = this.getBalance(toMethod, toAccount);
+            if (fromBal < amount) return false;
+            
+            this.setBalance(fromMethod, fromAccount, fromBal - amount);
+            this.setBalance(toMethod, toAccount, toBal + amount);
+            return true;
+        }
+    };
+
+    let currentPaymentMethod = 'momo';
+    let currentFineAmount = 0;
+    let currentLoanId = '';
+    let currentBookId = '';
+    let pendingPaymentData = null;
+    let currentOTP = ''; // Generated 6-digit WhatsApp verification code
+
+    function updatePhoneClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        const clockEl = document.getElementById('phone-clock');
+        const dateEl = document.getElementById('phone-date');
+        if (clockEl) clockEl.textContent = `${h}:${m}`;
+        if (dateEl) dateEl.textContent = dateStr;
+    }
+
+    function updateWalletBalanceIndicator() {
+        const inputVal = currentPaymentMethod === 'momo' 
+            ? document.getElementById('momo-phone').value.trim() 
+            : currentPaymentMethod === 'bk' 
+                ? document.getElementById('bk-account').value.trim() 
+                : document.getElementById('equity-account').value.trim();
+                
+        const indicator = document.getElementById('wallet-balance-indicator');
+        if (!indicator) return;
+        
+        if (!inputVal) {
+            indicator.classList.add('hidden');
+            return;
+        }
+        
+        // Validate Momo phone format specifically
+        if (currentPaymentMethod === 'momo' && !/^\+?[0-9]{8,15}$/.test(inputVal)) {
+            indicator.classList.add('hidden');
+            return;
+        }
+        
+        const balance = MockWalletSystem.getBalance(currentPaymentMethod, inputVal);
+        indicator.classList.remove('hidden');
+        
+        const fineAmt = currentFineAmount || 0;
+        const payAmt = parseFloat(document.getElementById('custom-pay-amount').value) || fineAmt;
+        
+        if (balance >= payAmt) {
+            indicator.className = 'mt-1 text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 w-full bg-sage-green/10 text-sage-green border border-sage-green/20';
+            indicator.innerHTML = `<span class="material-symbols-outlined text-[15px]">account_balance_wallet</span> Available Balance: <strong>${balance.toLocaleString()} FRW</strong> (Sufficient)`;
+        } else {
+            indicator.className = 'mt-1 text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 w-full bg-error-container text-error border border-error/20';
+            indicator.innerHTML = `<span class="material-symbols-outlined text-[15px]">warning</span> Available Balance: <strong>${balance.toLocaleString()} FRW</strong> (Insufficient Funds)`;
+        }
+    }
+
+    function selectPaymentMethod(method) {
+        currentPaymentMethod = method;
+        
+        // Reset tabs styles
+        const btnMomo = document.getElementById('btn-pay-momo');
+        const btnBk = document.getElementById('btn-pay-bk');
+        const btnEquity = document.getElementById('btn-pay-equity');
+        
+        [btnMomo, btnBk, btnEquity].forEach(btn => {
+            if (!btn) return;
+            btn.className = 'py-2 px-1 rounded-lg border border-dusty-rose/20 hover:border-teal-blue/50 flex flex-col items-center justify-center gap-1 transition-all text-deep-pine';
+        });
+        
+        // Hide all forms
+        document.querySelectorAll('.payment-form').forEach(el => el.classList.add('hidden'));
+        
+        const activeBtn = document.getElementById(`btn-pay-${method}`);
+        if (activeBtn) {
+            activeBtn.className = 'py-2 px-1 rounded-lg border border-teal-blue bg-teal-blue/5 text-teal-blue flex flex-col items-center justify-center gap-1 transition-all';
+        }
+        
+        const activeForm = document.getElementById(`form-pay-${method}`);
+        if (activeForm) activeForm.classList.remove('hidden');
+        
+        // Update balance indicator for the selected tab
+        updateWalletBalanceIndicator();
+        
+        // Update button text
+        const confirmBtn = document.getElementById('confirm-payment-btn');
+        if (confirmBtn) {
+            const methodNames = { momo: 'MTN MoMo', bk: 'BK Bank', equity: 'Equity Bank' };
+            confirmBtn.textContent = `Pay via ${methodNames[method]}`;
+        }
+    }
+
+    function generateOTP() {
+        return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    function updateChangePreview() {
+        const input = parseFloat(document.getElementById('custom-pay-amount').value) || 0;
+        const fine = parseFloat(currentFineAmount) || 0;
+        const preview = document.getElementById('change-preview');
+        if (!preview) return;
+        if (input <= 0) {
+            preview.classList.add('hidden');
+            return;
+        }
+        preview.classList.remove('hidden');
+        const diff = input - fine;
+        if (diff > 0) {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-sage-green/10 text-sage-green border border-sage-green/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">account_balance_wallet</span> Change of <strong>${diff.toLocaleString()} FRW</strong> will be refunded back to your account.`;
+        } else if (diff === 0) {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-teal-blue/10 text-teal-blue border border-teal-blue/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">check_circle</span> Exact amount — no change.`;
+        } else {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-error-container text-error border border-error/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">error</span> Amount is <strong>${Math.abs(diff).toLocaleString()} FRW short</strong> of the required fine.`;
+        }
+    }
+
+    async function startPaymentCheckout() {
+        const inputVal = currentPaymentMethod === 'momo' 
+            ? document.getElementById('momo-phone').value.trim() 
+            : currentPaymentMethod === 'bk' 
+                ? document.getElementById('bk-account').value.trim() 
+                : document.getElementById('equity-account').value.trim();
+
+        if (!inputVal) {
+            showToast('Please enter your account or phone details.', 'error');
+            return;
+        }
+
+        if (currentPaymentMethod === 'momo' && !/^\+?[0-9]{8,15}$/.test(inputVal)) {
+            showToast('Please enter a valid phone number (8 to 15 digits)', 'error');
+            return;
+        }
+
+        const enteredAmount = parseFloat(document.getElementById('custom-pay-amount').value) || 0;
+        if (enteredAmount <= 0) {
+            showToast('Please enter the amount you wish to pay.', 'error');
+            return;
+        }
+        if (enteredAmount < currentFineAmount) {
+            const shortfall = currentFineAmount - enteredAmount;
+            showToast(`Amount too low — you are ${shortfall.toLocaleString()} FRW short of the required fine.`, 'error');
+            return;
+        }
+
+        // Automatically check if payer has enough money in their balance
+        const currentBalance = MockWalletSystem.getBalance(currentPaymentMethod, inputVal);
+        if (currentBalance < enteredAmount) {
+            showToast(`Transaction Failed: Insufficient funds. Your balance is ${currentBalance.toLocaleString()} FRW, but this payment requires ${enteredAmount.toLocaleString()} FRW.`, 'error');
+            // Auto-check the simulated checkbox to keep UI in sync
+            const failCheck = document.getElementById('simulate-insufficient-funds');
+            if (failCheck) failCheck.checked = true;
+            return;
+        } else {
+            const failCheck = document.getElementById('simulate-insufficient-funds');
+            if (failCheck) failCheck.checked = false;
+        }
+
+        // Show processing spinner inside modal
+        document.getElementById('payment-screen-input').classList.add('hidden');
+        const procEl = document.getElementById('payment-screen-processing');
+        procEl.style.removeProperty('display');
+        procEl.style.display = 'flex';
+
+        const providers = { momo: 'MTN MoMo Pay', bk: 'Bank of Kigali (BK)', equity: 'Equity Bank' };
+        document.getElementById('processing-title').textContent = `Connecting to ${providers[currentPaymentMethod]}...`;
+        document.getElementById('processing-subtitle').textContent = `Initiating secure transaction with the provider...`;
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Store payment data for push approval step
+        pendingPaymentData = { inputVal, enteredAmount };
+
+        const smsProviderNames = { momo: 'MTN MoMo', bk: 'BK Mobile Banking', equity: 'Equity Bank Mobile' };
+        const providerColors = {
+            momo: 'linear-gradient(135deg, #FFCC00 0%, #FF8C00 100%)',
+            bk: 'linear-gradient(135deg, #0033A0 0%, #0056D2 100%)',
+            equity: 'linear-gradient(135deg, #B22222 0%, #DC143C 100%)'
+        };
+
+        document.getElementById('prompt-app-title').textContent = smsProviderNames[currentPaymentMethod];
+        const header = document.getElementById('push-provider-header');
+        if (header) header.style.background = providerColors[currentPaymentMethod];
+
+        const enteredAmt = parseFloat(document.getElementById('custom-pay-amount').value) || currentFineAmount;
+        document.getElementById('approval-amount-display').textContent = `${enteredAmt.toLocaleString()} FRW`;
+        document.getElementById('payer-phone-display').textContent = inputVal;
+        document.getElementById('sent-to-phone').textContent = inputVal;
+        document.getElementById('phone-number-display').textContent = inputVal;
+
+        // Restart slide-in animation
+        const notifCard = document.querySelector('.push-notif-card');
+        if (notifCard) {
+            notifCard.style.animation = 'none';
+            void notifCard.offsetWidth;
+            notifCard.style.animation = 'slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+        }
+
+        updatePhoneClock();
+
+        // Hide modal processing screen
+        procEl.style.display = 'none';
+
+        // Show the SEPARATE push notification overlay (z-index 9999)
+        const overlay = document.getElementById('push-notif-overlay');
+        overlay.style.display = 'flex';
+    }
+
+    // ─── WhatsApp OTP Helpers ─────────────────────────────────────────────────
+    function getWhatsAppCleanNumber(raw) {
+        let n = raw.replace(/\s+/g, '').replace(/[^0-9+]/g, '');
+        if (n.startsWith('+')) n = n.slice(1);
+        if (n.startsWith('07') || n.startsWith('08') || n.startsWith('09')) n = '250' + n.slice(1);
+        if (n.startsWith('2507') || n.startsWith('2508') || n.startsWith('2509')) return n;
+        return n; // Return as-is for bank account numbers
+    }
+
+    function openWhatsAppChat() {
+        if (!pendingPaymentData) return;
+        const { inputVal } = pendingPaymentData;
+        const cleanNum = getWhatsAppCleanNumber(inputVal);
+        const amount = pendingPaymentData.enteredAmount || currentFineAmount;
+        const msg = encodeURIComponent(
+            `🔐 SCHOLASTIC LIBRARY — Payment Verification\n\n` +
+            `Your 6-digit code: *${currentOTP}*\n\n` +
+            `Amount: ${amount.toLocaleString()} FRW\n` +
+            `Recipient: Library (0799361513)\n\n` +
+            `Enter this code in the app to confirm your fine payment.\n` +
+            `Do NOT share this code with anyone.`
+        );
+        window.open(`https://wa.me/${cleanNum}?text=${msg}`, '_blank');
+    }
+
+    function otpAutoTab(el, nextId) {
+        el.value = el.value.replace(/[^0-9]/g, '');
+        if (el.value.length === 1 && nextId) {
+            document.getElementById(nextId).focus();
+        }
+    }
+
+    async function approvePushPayment() {
+        if (!pendingPaymentData) {
+            showToast('Payment session expired. Please try again.', 'error');
+            resetPaymentScreens();
+            return;
+        }
+
+        if (!currentFineAmount || currentFineAmount <= 0) {
+            showToast('Payment failed: Invalid fine amount.', 'error');
+            closePaymentModal();
+            return;
+        }
+
+        // Generate a new 6-digit OTP
+        currentOTP = String(Math.floor(100000 + Math.random() * 900000));
+
+        // Show OTP on the WhatsApp notification card in the phone mockup
+        const waCard = document.getElementById('wa-notif-card');
+        if (waCard) {
+            waCard.style.display = 'block';
+            waCard.style.animation = 'slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+            document.getElementById('wa-notif-otp').textContent = currentOTP;
+        }
+
+        // After a short delay, hide the overlay and show OTP screen inside modal
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        document.getElementById('push-notif-overlay').style.display = 'none';
+
+        // Show Screen 3 (OTP verification)
+        const { inputVal } = pendingPaymentData;
+        document.getElementById('otp-sent-phone').textContent = inputVal;
+        ['otp-d1','otp-d2','otp-d3','otp-d4','otp-d5','otp-d6'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const otpErrMsg = document.getElementById('otp-error-msg');
+        if (otpErrMsg) otpErrMsg.style.display = 'none';
+
+        document.getElementById('payment-screen-otp').style.display = 'flex';
+        document.getElementById('payment-screen-otp').style.flexDirection = 'column';
+        document.getElementById('otp-d1').focus();
+    }
+
+    async function verifyOTPAndComplete() {
+        if (!pendingPaymentData) {
+            showToast('Payment session expired. Please try again.', 'error');
+            resetPaymentScreens();
+            return;
+        }
+
+        const entered = ['otp-d1','otp-d2','otp-d3','otp-d4','otp-d5','otp-d6']
+            .map(id => (document.getElementById(id) || {value:''}).value.trim())
+            .join('');
+
+        const errMsg = document.getElementById('otp-error-msg');
+
+        if (entered.length < 6) {
+            if (errMsg) { errMsg.style.display = 'block'; errMsg.textContent = '❌ Please enter all 6 digits.'; }
+            return;
+        }
+
+        if (entered !== currentOTP) {
+            if (errMsg) { errMsg.style.display = 'block'; errMsg.textContent = '❌ Incorrect code. Please check your WhatsApp and try again.'; }
+            // Shake animation
+            ['otp-d1','otp-d2','otp-d3','otp-d4','otp-d5','otp-d6'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.style.borderColor = '#dc2626'; el.value = ''; }
+            });
+            document.getElementById('otp-d1').focus();
+            return;
+        }
+
+        // OTP correct — proceed with payment
+        if (errMsg) errMsg.style.display = 'none';
+        document.getElementById('payment-screen-otp').style.display = 'none';
+
+        const procEl2 = document.getElementById('payment-screen-processing');
+        procEl2.style.removeProperty('display');
+        procEl2.style.display = 'flex';
+        document.getElementById('processing-title').textContent = 'Finalizing payment...';
+        document.getElementById('processing-subtitle').textContent = 'OTP verified — debiting account and recording return...';
+
+        const { inputVal, enteredAmount } = pendingPaymentData;
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1800));
+
+            const success = MockWalletSystem.transfer(currentPaymentMethod, inputVal, 'momo', '0799361513', enteredAmount);
+            if (!success) throw new Error('Insufficient funds on account balance.');
+
+            await processReturn(currentLoanId, currentBookId);
+            const change = enteredAmount - currentFineAmount;
+
+            if (change > 0) {
+                MockWalletSystem.transfer('momo', '0799361513', currentPaymentMethod, inputVal, change);
+            }
+
+            currentOTP = '';
+            pendingPaymentData = null;
+            document.getElementById('payment-screen-processing').style.display = 'none';
+            closePaymentModal();
+            if (change > 0) {
+                showToast(`✅ Payment of ${enteredAmount.toLocaleString()} FRW verified & approved! Book returned. Change of ${change.toLocaleString()} FRW refunded.`);
+            } else {
+                showToast(`✅ Payment of ${currentFineAmount.toLocaleString()} FRW verified! Book returned successfully.`);
+            }
+        } catch (err) {
+            showToast(`Payment failed: ` + (err.message || 'Transaction declined.'), 'error');
+            resetPaymentScreens();
+        }
+    }
+
+    function declinePushPayment() {
+        pendingPaymentData = null;
+        showToast('Payment declined on your phone. Transaction cancelled.', 'error');
+        resetPaymentScreens();
+    }
+
+    function resetPaymentScreens() {
+        const overlay = document.getElementById('push-notif-overlay');
+        if (overlay) overlay.style.display = 'none';
+        const procEl = document.getElementById('payment-screen-processing');
+        if (procEl) procEl.style.display = 'none';
+        const otpEl = document.getElementById('payment-screen-otp');
+        if (otpEl) otpEl.style.display = 'none';
+        const waCard = document.getElementById('wa-notif-card');
+        if (waCard) waCard.style.display = 'none';
+        const inputEl = document.getElementById('payment-screen-input');
+        if (inputEl) inputEl.classList.remove('hidden');
+        currentOTP = '';
+        pendingPaymentData = null;
+        updateWalletBalanceIndicator();
+    }
 
     // Toast notification
     function showToast(message, type = 'success') {
@@ -136,27 +756,14 @@
 
     async function returnBook(loanId, bookId, fineAmount = 0) {
         if (fineAmount > 0) {
-            // Open payment modal
-            document.getElementById('payment-modal').style.display = 'flex';
+            currentFineAmount = fineAmount;
+            currentLoanId = loanId;
+            currentBookId = bookId;
+            const modalEl = document.getElementById('payment-modal');
+            if (modalEl) modalEl.style.display = 'flex';
             document.getElementById('fine-amount-display').textContent = `${fineAmount} FRW`;
-            
-            // Override the confirm button action to process the return after payment
-            document.getElementById('confirm-payment-btn').onclick = async function() {
-                this.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Processing...';
-                this.disabled = true;
-                try {
-                    // Simulate payment delay
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    await processReturn(loanId, bookId);
-                    closePaymentModal();
-                    showToast('Payment successful! Book returned.');
-                } catch (err) {
-                    showToast(err.message || 'Payment or return failed.', 'error');
-                } finally {
-                    this.innerHTML = 'Confirm Payment';
-                    this.disabled = false;
-                }
-            };
+            selectPaymentMethod('momo');
+            resetPaymentScreens();
             return;
         }
 
@@ -186,7 +793,11 @@
     }
 
     function closePaymentModal() {
-        document.getElementById('payment-modal').style.display = 'none';
+        const modalEl = document.getElementById('payment-modal');
+        if (modalEl) modalEl.style.display = 'none';
+        const overlay = document.getElementById('push-notif-overlay');
+        if (overlay) overlay.style.display = 'none';
+        resetPaymentScreens();
     }
 
     async function loadDashboard() {
@@ -205,175 +816,137 @@
             return;
         }
 
-        // Fetch user profile from DB for real name and avatar
-        let name = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
-        let avatarUrl = session.user.user_metadata?.profile_picture_url;
+        const timeoutHelper = window.withTimeout || (async (p) => p);
 
+        // Fetch everything in parallel
         try {
-            const { data: profile } = await window.sbClient
-                .from('library_users')
-                .select('full_name, profile_picture_url')
-                .eq('id', session.user.id)
-                .single();
+            const [profileRes, loansRes, recentBooksRes, totalBooksRes] = await Promise.all([
+                timeoutHelper(window.sbClient.from('library_users').select('full_name, profile_picture_url').eq('id', session.user.id).single(), 3000, { data: null, error: null }),
+                timeoutHelper(window.sbClient.from('loans').select('*, books(id, title)').eq('user_id', session.user.id).eq('status', 'active'), 3000, { data: [], error: null }),
+                timeoutHelper(window.sbClient.from('books').select('*').order('created_at', { ascending: false }).limit(3), 3000, { data: [], error: null }),
+                timeoutHelper(window.sbClient.from('books').select('*', { count: 'exact', head: true }), 3000, { count: 0, error: null })
+            ]);
+
+            // Update user profile details
+            let name = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+            let avatarUrl = session.user.user_metadata?.profile_picture_url;
+            const profile = profileRes.data;
             if (profile) {
                 if (profile.full_name) name = profile.full_name;
                 if (profile.profile_picture_url) avatarUrl = profile.profile_picture_url;
             }
+
+            document.getElementById('welcome-text').innerText = `Welcome back, ${name}.`;
+            if (avatarUrl) {
+                const avatarImg = document.getElementById('user-avatar');
+                if (avatarImg) avatarImg.src = avatarUrl;
+            }
+
+            // Update loans
+            const loans = loansRes.data || [];
+            const loanContainer = document.getElementById('dashboard-loans');
+            const quotaUsed = loans.length;
+            const limit = 10;
+            const percentage = (quotaUsed / limit) * 100;
+
+            // Check for overdue
+            const overdueLoans = loans.filter(l => new Date(l.due_date) < new Date());
+            const overdueAlert = document.getElementById('overdue-alert');
+            if (overdueLoans.length > 0) {
+                overdueAlert.classList.remove('hidden');
+                document.getElementById('overdue-text').textContent = `You have ${overdueLoans.length} overdue book(s). Please return them to avoid penalties.`;
+            } else {
+                overdueAlert.classList.add('hidden');
+            }
+
+            loanContainer.innerHTML = `
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+                <div class="flex justify-between items-start mb-lg relative z-10">
+                    <div>
+                        <h3 class="font-headline-md text-headline-md text-deep-pine">Current Loans</h3>
+                        <p class="font-body-sm text-body-sm text-dusty-rose mt-1">${quotaUsed} active loan(s)</p>
+                    </div>
+                    <span class="bg-soft-parchment text-deep-pine font-label-md px-3 py-1 rounded-full border border-dusty-rose/20">${quotaUsed} / ${limit} Quota Used</span>
+                </div>
+                
+                <div class="relative z-10 mb-6 flex flex-col gap-2">
+                    ${loans.length > 0 
+                        ? loans.map(l => {
+                            const isOverdue = new Date(l.due_date) < new Date();
+                            let fineAmount = 0;
+                            if (isOverdue) {
+                                const daysLate = Math.ceil((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
+                                fineAmount = daysLate * 500;
+                            }
+                            
+                            return `<div class="bg-surface-container-low p-3 rounded border ${isOverdue ? 'border-error/30 bg-error-container/20' : 'border-dusty-rose/10'} flex justify-between items-center">
+                                <div>
+                                    <span class="font-body-md text-deep-pine">${l.books?.title || 'Unknown'}</span>
+                                    <span class="font-label-md ${isOverdue ? 'text-error' : 'text-dusty-rose'} ml-3">
+                                        Due: ${new Date(l.due_date).toLocaleDateString()}
+                                        ${isOverdue ? ` (OVERDUE — Fine: <span class="font-bold">${fineAmount} FRW</span>)` : ''}
+                                    </span>
+                                </div>
+                                <button onclick="returnBook('${l.id}', '${l.books?.id}', ${fineAmount})" class="${isOverdue ? 'bg-error' : 'bg-teal-blue'} text-white px-3 py-1 rounded font-label-md hover:opacity-90 transition-opacity flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px]">${isOverdue ? 'payments' : 'undo'}</span> 
+                                    ${isOverdue ? 'Pay Fine & Return' : 'Return'}
+                                </button>
+                            </div>`;
+                        }).join('')
+                        : '<p class="font-body-md text-dusty-rose">You have no active loans. Visit the <a href="catalog.html" class="text-teal-blue hover:underline">catalog</a> to borrow books!</p>'}
+                </div>
+
+                <div class="mt-auto relative z-10">
+                    <div class="w-full bg-surface-container-low h-3 rounded-full overflow-hidden flex">
+                        <div class="bg-sage-green h-full transition-all duration-500" style="width: ${percentage}%;"></div>
+                        <div class="bg-surface-variant h-full flex-1"></div>
+                    </div>
+                    <div class="flex justify-between mt-sm text-label-md text-dusty-rose">
+                        <span>0</span>
+                        <span>Library Capacity Limit (${limit})</span>
+                    </div>
+                </div>
+            `;
+
+            // Render Action Hub
+            const recentBooks = recentBooksRes.data || [];
+            const totalBooks = totalBooksRes.count || 0;
+            const myLoansCount = loans.length;
+
+            const hub = document.getElementById('action-hub-cards');
+            hub.innerHTML = `
+                <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                    <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                        <img alt="My Loans" class="w-full h-full object-cover" src="${coverImages[0]}" />
+                        <span class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-deep-pine font-label-md px-2 py-1 rounded text-xs">${myLoansCount} Active</span>
+                    </div>
+                    <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">My Active Loans</h4>
+                    <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">You have ${myLoansCount} book(s) currently checked out.</p>
+                    <a href="catalog.html" class="w-full border border-teal-blue text-teal-blue font-label-md py-2 rounded-lg hover:bg-teal-blue/5 transition-colors text-center block">Browse Catalog</a>
+                </div>
+
+                <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                    <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                        <img alt="Library shelf" class="w-full h-full object-cover" src="${coverImages[1]}" />
+                    </div>
+                    <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Explore the Library</h4>
+                    <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">${totalBooks} titles across all categories are available in the catalog.</p>
+                    <a href="catalog.html" class="w-full bg-sage-green text-white font-label-md py-2 rounded-lg hover:bg-opacity-90 transition-opacity text-center block">Explore Catalog</a>
+                </div>
+
+                <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
+                    <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
+                        <img alt="New books" class="w-full h-full object-cover" src="${coverImages[2]}" />
+                        <span class="absolute top-2 right-2 bg-sage-green text-white font-label-md px-2 py-1 rounded text-xs">New</span>
+                    </div>
+                    <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Recent Arrivals</h4>
+                    <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">Latest: "${recentBooks.length > 0 ? recentBooks[0].title : 'New books'}" and ${recentBooks.length - 1 > 0 ? recentBooks.length - 1 + ' more' : 'others'}.</p>
+                    <a href="catalog.html" class="w-full border border-dusty-rose text-dusty-rose font-label-md py-2 rounded-lg hover:bg-dusty-rose/5 transition-colors text-center block">Browse</a>
+                </div>
+            `;
         } catch (e) {
-            console.warn('Dashboard profile load failed:', e);
+            console.error('Student dashboard load failed:', e);
         }
-
-        // Set welcome
-        document.getElementById('welcome-text').innerText = `Welcome back, ${name}.`;
-
-        // Set avatar
-        if (avatarUrl) {
-            const avatarImg = document.getElementById('user-avatar');
-            if (avatarImg) avatarImg.src = avatarUrl;
-        }
-
-        // Fetch loans
-        const { data: loans, error } = await window.sbClient
-            .from('loans')
-            .select('*, books(id, title)')
-            .eq('user_id', session.user.id)
-            .eq('status', 'active');
-
-        const loanContainer = document.getElementById('dashboard-loans');
-        
-        if (error) {
-            loanContainer.innerHTML = '<p class="text-error">Failed to load loans.</p>';
-            return;
-        }
-
-        const quotaUsed = loans ? loans.length : 0;
-        const limit = 10;
-        const percentage = (quotaUsed / limit) * 100;
-
-        // Check for overdue
-        const overdueLoans = loans ? loans.filter(l => new Date(l.due_date) < new Date()) : [];
-        const overdueAlert = document.getElementById('overdue-alert');
-        if (overdueLoans.length > 0) {
-            overdueAlert.classList.remove('hidden');
-            document.getElementById('overdue-text').textContent = `You have ${overdueLoans.length} overdue book(s). Please return them to avoid penalties.`;
-        }
-
-        loanContainer.innerHTML = `
-            <div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
-            <div class="flex justify-between items-start mb-lg relative z-10">
-                <div>
-                    <h3 class="font-headline-md text-headline-md text-deep-pine">Current Loans</h3>
-                    <p class="font-body-sm text-body-sm text-dusty-rose mt-1">${quotaUsed} active loan(s)</p>
-                </div>
-                <span class="bg-soft-parchment text-deep-pine font-label-md px-3 py-1 rounded-full border border-dusty-rose/20">${quotaUsed} / ${limit} Quota Used</span>
-            </div>
-            
-            <div class="relative z-10 mb-6 flex flex-col gap-2">
-                ${loans && loans.length > 0 
-                    ? loans.map(l => {
-                        const isOverdue = new Date(l.due_date) < new Date();
-                        let fineAmount = 0;
-                        if (isOverdue) {
-                            const daysLate = Math.ceil((new Date() - new Date(l.due_date)) / (1000 * 60 * 60 * 24));
-                            fineAmount = daysLate * 500;
-                        }
-                        
-                        return `<div class="bg-surface-container-low p-3 rounded border ${isOverdue ? 'border-error/30 bg-error-container/20' : 'border-dusty-rose/10'} flex justify-between items-center">
-                            <div>
-                                <span class="font-body-md text-deep-pine">${l.books?.title || 'Unknown'}</span>
-                                <span class="font-label-md ${isOverdue ? 'text-error' : 'text-dusty-rose'} ml-3">
-                                    Due: ${new Date(l.due_date).toLocaleDateString()}
-                                    ${isOverdue ? ` (OVERDUE — Fine: <span class="font-bold">${fineAmount} FRW</span>)` : ''}
-                                </span>
-                            </div>
-                            <button onclick="returnBook('${l.id}', '${l.books?.id}', ${fineAmount})" class="${isOverdue ? 'bg-error' : 'bg-teal-blue'} text-white px-3 py-1 rounded font-label-md hover:opacity-90 transition-opacity flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[16px]">${isOverdue ? 'payments' : 'undo'}</span> 
-                                ${isOverdue ? 'Pay Fine & Return' : 'Return'}
-                            </button>
-                        </div>`;
-                    }).join('')
-                    : '<p class="font-body-md text-dusty-rose">You have no active loans. Visit the <a href="catalog.html" class="text-teal-blue hover:underline">catalog</a> to borrow books!</p>'}
-            </div>
-
-            <div class="mt-auto relative z-10">
-                <div class="w-full bg-surface-container-low h-3 rounded-full overflow-hidden flex">
-                    <div class="bg-sage-green h-full transition-all duration-500" style="width: ${percentage}%;"></div>
-                    <div class="bg-surface-variant h-full flex-1"></div>
-                </div>
-                <div class="flex justify-between mt-sm text-label-md text-dusty-rose">
-                    <span>0</span>
-                    <span>Library Capacity Limit (${limit})</span>
-                </div>
-            </div>
-        `;
-
-        // Load Action Hub dynamically
-        await loadActionHub(session);
-    }
-
-    async function loadActionHub(session) {
-        const hub = document.getElementById('action-hub-cards');
-
-        // Fetch recent arrivals (3 newest books)
-        const { data: recentBooks } = await window.sbClient
-            .from('books')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(3);
-
-        // Fetch user's active loan count
-        const { count: myLoansCount } = await window.sbClient
-            .from('loans')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', session.user.id)
-            .eq('status', 'active');
-
-        // Fetch total books count
-        const { count: totalBooks } = await window.sbClient
-            .from('books')
-            .select('*', { count: 'exact', head: true });
-
-        hub.innerHTML = '';
-
-        // Card 1: My Active Loans summary
-        hub.innerHTML += `
-            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
-                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
-                    <img alt="My Loans" class="w-full h-full object-cover" src="${coverImages[0]}" />
-                    <span class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-deep-pine font-label-md px-2 py-1 rounded text-xs">${myLoansCount || 0} Active</span>
-                </div>
-                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">My Active Loans</h4>
-                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">You have ${myLoansCount || 0} book(s) currently checked out.</p>
-                <a href="catalog.html" class="w-full border border-teal-blue text-teal-blue font-label-md py-2 rounded-lg hover:bg-teal-blue/5 transition-colors text-center block">Browse Catalog</a>
-            </div>
-        `;
-
-        // Card 2: Recommended (based on total catalog)
-        hub.innerHTML += `
-            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
-                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
-                    <img alt="Library shelf" class="w-full h-full object-cover" src="${coverImages[1]}" />
-                </div>
-                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Explore the Library</h4>
-                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">${totalBooks || 0} titles across all categories are available in the catalog.</p>
-                <a href="catalog.html" class="w-full bg-sage-green text-white font-label-md py-2 rounded-lg hover:bg-opacity-90 transition-opacity text-center block">Explore Catalog</a>
-            </div>
-        `;
-
-        // Card 3: Recent Arrivals (real data)
-        const recentTitle = recentBooks && recentBooks.length > 0 ? recentBooks[0].title : 'New books';
-        const recentCount = recentBooks ? recentBooks.length : 0;
-        hub.innerHTML += `
-            <div class="bg-soft-parchment border border-dusty-rose/20 rounded-xl p-md hover:shadow-[0_4px_12px_rgba(34,49,39,0.05)] transition-shadow flex flex-col h-full">
-                <div class="w-full h-32 bg-surface-variant rounded-lg mb-4 overflow-hidden relative">
-                    <img alt="New books" class="w-full h-full object-cover" src="${coverImages[2]}" />
-                    <span class="absolute top-2 right-2 bg-sage-green text-white font-label-md px-2 py-1 rounded text-xs">New</span>
-                </div>
-                <h4 class="font-headline-sm text-headline-sm text-deep-pine mb-1">Recent Arrivals</h4>
-                <p class="font-body-sm text-body-sm text-dusty-rose mb-4 flex-1">Latest: "${recentTitle}" and ${recentCount - 1 > 0 ? recentCount - 1 + ' more' : 'others'}.</p>
-                <a href="catalog.html" class="w-full border border-dusty-rose text-dusty-rose font-label-md py-2 rounded-lg hover:bg-dusty-rose/5 transition-colors text-center block">Browse</a>
-            </div>
-        `;
     }
 
     document.addEventListener('DOMContentLoaded', async () => {

@@ -221,6 +221,19 @@
   }
 
   /* ── Fetch notifications from Supabase ──────────────────────────────── */
+  // Helper for handling query timeouts
+  async function withTimeout(promise, ms = 3000, defaultValue = { data: null, error: new Error('Timeout') }) {
+    let timeoutId;
+    const timeoutPromise = new Promise((resolve) => {
+      timeoutId = setTimeout(() => resolve(defaultValue), ms);
+    });
+    return Promise.race([promise, timeoutPromise]).then((res) => {
+      clearTimeout(timeoutId);
+      return res;
+    });
+  }
+
+  /* ── Fetch notifications from Supabase ──────────────────────────────── */
   async function fetchNotifications(role, userId) {
     const notifs = [];
     const now = new Date();
@@ -228,14 +241,32 @@
 
     try {
       if (role === 'student' || role !== 'librarian') {
-        // ── My active loans ─────────────────────────────────────────────
-        const { data: loans } = await window.sbClient
-          .from('loans')
-          .select('id, due_date, created_at, books(title)')
-          .eq('user_id', userId)
-          .eq('status', 'active');
+        // Fetch active loans and reservations in parallel
+        const [loansRes, reservesRes] = await Promise.all([
+          withTimeout(
+            window.sbClient
+              .from('loans')
+              .select('id, due_date, created_at, books(title)')
+              .eq('user_id', userId)
+              .eq('status', 'active'),
+            3000,
+            { data: [], error: null }
+          ),
+          withTimeout(
+            window.sbClient
+              .from('reservations')
+              .select('id, created_at, books(title)')
+              .eq('user_id', userId)
+              .eq('status', 'pending'),
+            3000,
+            { data: [], error: null }
+          )
+        ]);
 
-        (loans || []).forEach(loan => {
+        const loans = loansRes.data || [];
+        const reserves = reservesRes.data || [];
+
+        loans.forEach(loan => {
           const due = new Date(loan.due_date);
           const title = loan.books?.title || 'a book';
           if (due < now) {
@@ -259,35 +290,68 @@
           }
         });
 
-        // ── My pending reservations ──────────────────────────────────────
-        const { data: reserves } = await window.sbClient
-          .from('reservations')
-          .select('id, created_at, books(title)')
-          .eq('user_id', userId)
-          .eq('status', 'pending');
-
         if (reserves && reserves.length > 0) {
           const bookNames = reserves.slice(0, 2).map(r => `"${r.books?.title || 'Book'}"`).join(', ');
           const extra = reserves.length > 2 ? ` +${reserves.length - 2} more` : '';
           notifs.push(makeNotif(
-            'info', 'bookmark',
-            `${reserves.length} Pending Reservation${reserves.length > 1 ? 's' : ''}`,
-            `${bookNames}${extra} — you'll be notified when available.`,
-            'reservations.html', 'View Reservations',
-            Date.now() - 60000
+              'info', 'bookmark',
+              `${reserves.length} Pending Reservation${reserves.length > 1 ? 's' : ''}`,
+              `${bookNames}${extra} — you'll be notified when available.`,
+              'reservations.html', 'View Reservations',
+              Date.now() - 60000
           ));
         }
       }
 
       if (role === 'librarian') {
-        // ── All overdue loans (system-wide) ─────────────────────────────
-        const { data: overdueLoans } = await window.sbClient
-          .from('loans')
-          .select('id, due_date, user_id, books(title), library_users(full_name)')
-          .eq('status', 'active')
-          .lt('due_date', now.toISOString())
-          .order('due_date', { ascending: true })
-          .limit(20);
+        const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+        const [overdueRes, dueSoonRes, reserveRes, newStudentsRes] = await Promise.all([
+          withTimeout(
+            window.sbClient
+              .from('loans')
+              .select('id, due_date, user_id, books(title), library_users(full_name)')
+              .eq('status', 'active')
+              .lt('due_date', now.toISOString())
+              .order('due_date', { ascending: true })
+              .limit(20),
+            3000,
+            { data: [], error: null }
+          ),
+          withTimeout(
+            window.sbClient
+              .from('loans')
+              .select('id, due_date, books(title), library_users(full_name)')
+              .eq('status', 'active')
+              .gte('due_date', now.toISOString())
+              .lte('due_date', soon.toISOString())
+              .limit(10),
+            3000,
+            { data: [], error: null }
+          ),
+          withTimeout(
+            window.sbClient
+              .from('reservations')
+              .select('*', { count: 'exact', head: true })
+              .eq('status', 'pending'),
+            3000,
+            { count: 0, error: null }
+          ),
+          withTimeout(
+            window.sbClient
+              .from('library_users')
+              .select('id, full_name, created_at')
+              .eq('role', 'student')
+              .gte('created_at', weekAgo)
+              .order('created_at', { ascending: false }),
+            3000,
+            { data: [], error: null }
+          )
+        ]);
+
+        const overdueLoans = overdueRes.data || [];
+        const dueSoon = dueSoonRes.data || [];
+        const reserveCount = reserveRes.count || 0;
+        const newStudents = newStudentsRes.data || [];
 
         if (overdueLoans && overdueLoans.length > 0) {
           notifs.push(makeNotif(
@@ -299,15 +363,6 @@
           ));
         }
 
-        // ── Due in next 3 days (system-wide) ────────────────────────────
-        const { data: dueSoon } = await window.sbClient
-          .from('loans')
-          .select('id, due_date, books(title), library_users(full_name)')
-          .eq('status', 'active')
-          .gte('due_date', now.toISOString())
-          .lte('due_date', soon.toISOString())
-          .limit(10);
-
         if (dueSoon && dueSoon.length > 0) {
           notifs.push(makeNotif(
             'warning', 'schedule',
@@ -318,40 +373,17 @@
           ));
         }
 
-        // ── All pending reservations ─────────────────────────────────────
-        const { data: allReserves } = await window.sbClient
-          .from('reservations')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'pending');
-
-        if (allReserves !== null) {
-          // count is on the response header, try another way
-          const { count: reserveCount } = await window.sbClient
-            .from('reservations')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'pending');
-
-          if (reserveCount > 0) {
-            notifs.push(makeNotif(
-              'info', 'bookmark',
-              `${reserveCount} Pending Reservation${reserveCount > 1 ? 's' : ''}`,
-              `Students are waiting for books to become available.`,
-              'reservations.html', 'View Reservations',
-              Date.now() - 300000
-            ));
-          }
+        if (reserveCount > 0) {
+          notifs.push(makeNotif(
+            'info', 'bookmark',
+            `${reserveCount} Pending Reservation${reserveCount > 1 ? 's' : ''}`,
+            `Students are waiting for books to become available.`,
+            'reservations.html', 'View Reservations',
+            Date.now() - 300000
+          ));
         }
 
-        // ── New students (registered in last 7 days) ─────────────────────
-        const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
-        const { data: newStudents, error: stuErr } = await window.sbClient
-          .from('library_users')
-          .select('id, full_name, created_at')
-          .eq('role', 'student')
-          .gte('created_at', weekAgo)
-          .order('created_at', { ascending: false });
-
-        if (!stuErr && newStudents && newStudents.length > 0) {
+        if (newStudents && newStudents.length > 0) {
           const names = newStudents.slice(0, 2).map(s => s.full_name || 'Student').join(', ');
           notifs.push(makeNotif(
             'success', 'person_add',
@@ -523,16 +555,8 @@
     const { data: { session } } = await window.sbClient.auth.getSession();
     if (!session) return;
 
-    // Identify role from DB
+    // Use cached metadata role to render instantly
     let role = session.user.user_metadata?.role || 'student';
-    try {
-      const { data: profile } = await window.sbClient
-        .from('library_users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-      if (profile?.role) role = profile.role;
-    } catch (e) { /* use metadata fallback */ }
 
     injectStyles();
 
@@ -542,17 +566,45 @@
 
     buildUI(bellBtn);
 
-    // Fetch and render
-    allNotifications = await fetchNotifications(role, session.user.id);
-    renderPanel();
-    updateBadge();
+    // Fetch and render in background
+    _backgroundLoadNotifications(session, role);
+  }
 
-    // Auto-refresh every 2 minutes
-    setInterval(async () => {
+  async function _backgroundLoadNotifications(session, initialRole) {
+    let role = initialRole;
+    try {
+      const profilePromise = withTimeout(
+        window.sbClient
+          .from('library_users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single(),
+        3000,
+        { data: null, error: null }
+      );
+
       allNotifications = await fetchNotifications(role, session.user.id);
       renderPanel();
       updateBadge();
-    }, 120000);
+
+      // Background check for database role changes
+      const { data: profile } = await profilePromise;
+      if (profile && profile.role && profile.role !== role) {
+        role = profile.role;
+        allNotifications = await fetchNotifications(role, session.user.id);
+        renderPanel();
+        updateBadge();
+      }
+
+      // Auto-refresh every 2 minutes
+      setInterval(async () => {
+        allNotifications = await fetchNotifications(role, session.user.id);
+        renderPanel();
+        updateBadge();
+      }, 120000);
+    } catch (e) {
+      console.warn('notifications.js background load error:', e);
+    }
   }
 
   /* ── Find the notifications bell button in the page ─────────────────── */

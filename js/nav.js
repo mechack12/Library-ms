@@ -8,53 +8,21 @@
   - Real-time badge counts for Overdue and Reservations
 */
 
-async function initNav() {
-  if (!window.sbClient) {
-    console.error('nav.js: Supabase client (sbClient) not found');
-    return;
-  }
+// Helper for handling query timeouts
+async function withTimeout(promise, ms = 3000, defaultValue = { data: null, error: new Error('Timeout') }) {
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(defaultValue), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).then((res) => {
+    clearTimeout(timeoutId);
+    return res;
+  });
+}
 
-  // ── 1. Get session ────────────────────────────────────────────────────────
-  const { data: { session } } = await window.sbClient.auth.getSession();
-  if (!session) {
-    window.location.href = 'login.html';
-    return;
-  }
-
-  // ── 2. Fetch ACTUAL role from library_users table ─────────────────────────
-  //       user_metadata.role is only set at signup and can drift out of sync.
-  //       library_users is the source of truth.
-  let role = 'student';
-  let fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
-  let avatarUrl = session.user.user_metadata?.profile_picture_url || null;
-
-  try {
-    const { data: profile } = await window.sbClient
-      .from('library_users')
-      .select('role, full_name, profile_picture_url')
-      .eq('id', session.user.id)
-      .single();
-
-    if (profile) {
-      role      = profile.role                || role;
-      fullName  = profile.full_name           || fullName;
-      avatarUrl = profile.profile_picture_url || avatarUrl;
-    }
-  } catch (e) {
-    // Graceful fallback – use user_metadata role if DB query fails
-    role = session.user.user_metadata?.role || 'student';
-    console.warn('nav.js: library_users lookup failed, falling back to user_metadata role:', role);
-  }
-
-  // ── 3. Protect librarian-only pages ───────────────────────────────────────
+// Render sidebar UI instantly
+function renderSidebarUI(role, fullName, avatarUrl) {
   const currentPage = window.location.pathname.split('/').pop() || '';
-  const librarianOnlyPages = ['librarian-dashboard.html', 'students.html', 'categories.html', 'reports.html'];
-  if (role !== 'librarian' && librarianOnlyPages.includes(currentPage)) {
-    window.location.href = 'student-dashboard.html';
-    return;
-  }
-
-  // ── 4. Build sidebar ──────────────────────────────────────────────────────
   const sidebar = document.getElementById('app-sidebar');
   if (!sidebar) {
     console.warn('nav.js: No <aside id="app-sidebar"> placeholder found — skipping injection');
@@ -163,13 +131,13 @@ async function initNav() {
 
   </aside>`;
 
-  // ── 5. Wire up Logout ─────────────────────────────────────────────────────
+  // Wire up Logout
   document.getElementById('nav-logout')?.addEventListener('click', async () => {
     await window.sbClient.auth.signOut();
     window.location.href = 'login.html';
   });
 
-  // ── 6. Wire up Borrow/Return ──────────────────────────────────────────────
+  // Wire up Borrow/Return
   document.getElementById('nav-borrow-return')?.addEventListener('click', () => {
     const modal = document.getElementById('borrow-return-modal');
     if (modal) {
@@ -180,14 +148,13 @@ async function initNav() {
     }
   });
 
-  // ── 7. Sync top-bar avatar if it exists on the page ──────────────────────
+  // Sync top-bar avatar if it exists
   const topAvatar = document.getElementById('user-avatar');
   if (topAvatar) {
     topAvatar.title = "View/Edit Profile";
     topAvatar.style.cursor = 'pointer';
     topAvatar.classList.add("hover:opacity-80", "transition-all", "duration-150");
 
-    // Click handler to redirect to profile.html
     topAvatar.addEventListener('click', (e) => {
       e.stopPropagation();
       window.location.href = 'profile.html';
@@ -208,7 +175,6 @@ async function initNav() {
       const initialsSpan = document.getElementById('user-avatar-initials');
       if (initialsSpan) initialsSpan.classList.add('hidden');
     } else {
-      // Show initials fallback
       const initialsSpan = document.getElementById('user-avatar-initials');
       if (initialsSpan) {
         const initials = fullName.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -216,21 +182,95 @@ async function initNav() {
       }
     }
   }
+}
 
-  // ── 8. Badge counts ───────────────────────────────────────────────────────
-  await _navFetchBadges(role, session.user.id);
-  
-  // ── 9. Inject Header & Modals ─────────────────────────────────────────────
+async function _backgroundInitNav(session, initialRole, initialFullName, initialAvatarUrl, currentPage, librarianOnlyPages) {
+  let role = initialRole;
+  let fullName = initialFullName;
+  let avatarUrl = initialAvatarUrl;
+
+  try {
+    const profilePromise = withTimeout(
+      window.sbClient
+        .from('library_users')
+        .select('role, full_name, profile_picture_url')
+        .eq('id', session.user.id)
+        .single(),
+      3000,
+      { data: null, error: null }
+    );
+
+    // Trigger badges lookup in parallel
+    const badgesPromise = _navFetchBadges(role, session.user.id);
+
+    // Wait for the profile DB check
+    const { data: profile } = await profilePromise;
+
+    if (profile) {
+      const roleChanged = profile.role && profile.role !== role;
+      const nameChanged = profile.full_name && profile.full_name !== fullName;
+      const avatarChanged = profile.profile_picture_url && profile.profile_picture_url !== avatarUrl;
+
+      if (roleChanged || nameChanged || avatarChanged) {
+        role = profile.role || role;
+        fullName = profile.full_name || fullName;
+        avatarUrl = profile.profile_picture_url || avatarUrl;
+
+        // Redirect student attempts on librarian page immediately
+        if (role !== 'librarian' && librarianOnlyPages.includes(currentPage)) {
+          window.location.href = 'student-dashboard.html';
+          return;
+        }
+
+        renderSidebarUI(role, fullName, avatarUrl);
+
+        if (roleChanged) {
+          await _navFetchBadges(role, session.user.id);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('nav.js background sync error:', err);
+  }
+}
+
+async function initNav() {
+  if (!window.sbClient) {
+    console.error('nav.js: Supabase client (sbClient) not found');
+    return;
+  }
+
+  // 1. Get session (fast, local auth state cache check)
+  const { data: { session } } = await window.sbClient.auth.getSession();
+  if (!session) {
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // 2. Extract cached data and render UI immediately
+  let role = session.user.user_metadata?.role || 'student';
+  let fullName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User';
+  let avatarUrl = session.user.user_metadata?.profile_picture_url || null;
+
+  // Protect librarian-only pages
+  const currentPage = window.location.pathname.split('/').pop() || '';
+  const librarianOnlyPages = ['librarian-dashboard.html', 'students.html', 'categories.html', 'reports.html'];
+  if (role !== 'librarian' && librarianOnlyPages.includes(currentPage)) {
+    window.location.href = 'student-dashboard.html';
+    return;
+  }
+
+  renderSidebarUI(role, fullName, avatarUrl);
   injectHeaderAndModals(role);
+
+  // 3. Background profile refresh & badge checks (non-blocking!)
+  _backgroundInitNav(session, role, fullName, avatarUrl, currentPage, librarianOnlyPages);
 }
 
 function injectHeaderAndModals(role) {
-  // Check if header placeholder exists (we'll just prepend it to the main content container if missing, 
-  // but to be safe, we look for the main flex container next to sidebar)
   const mainContainer = document.querySelector('.flex-1.ml-64') || document.querySelector('.flex-1');
   if (!mainContainer) return;
   
-  // Only inject if not already present
   if (document.getElementById('global-top-header')) return;
 
   const currentTheme = localStorage.getItem('theme') || 'light';
@@ -238,22 +278,17 @@ function injectHeaderAndModals(role) {
     document.documentElement.classList.add('dark');
   }
 
-  // Build the Header
   const headerHtml = `
   <header id="global-top-header" class="border-b border-dusty-rose/20 bg-soft-parchment dark:bg-deep-pine/90 dark:border-white/10 flex justify-between items-center px-lg py-sm w-full z-20 shrink-0 transition-colors">
     <div class="flex items-center gap-lg">
       <span class="font-headline-lg text-headline-lg font-bold text-deep-pine dark:text-soft-parchment hidden md:block">LMS</span>
     </div>
-    
-    <!-- Middle: Search -->
     <div class="flex-1 max-w-md mx-lg hidden lg:block">
       <div class="relative flex items-center">
         <span class="material-symbols-outlined absolute left-3 text-deep-pine dark:text-soft-parchment/70">search</span>
         <input id="global-search" class="w-full bg-surface-container-low dark:bg-surface-dim/50 border border-dusty-rose/30 dark:border-white/20 rounded-lg py-2 pl-10 pr-4 font-body-sm text-deep-pine dark:text-soft-parchment focus:outline-none focus:border-sage-green focus:ring-1 focus:ring-sage-green transition-shadow placeholder:text-dusty-rose dark:placeholder:text-soft-parchment/50" placeholder="Search catalog, users, or ISBN..." type="text"/>
       </div>
     </div>
-    
-    <!-- Right Side: Actions -->
     <div class="flex items-center gap-md">
       ${role === 'librarian' ? `
       <button id="btn-action-hub" class="hidden lg:flex items-center gap-xs font-label-lg text-teal-blue dark:text-sage-green hover:opacity-80 transition-opacity">
@@ -280,7 +315,6 @@ function injectHeaderAndModals(role) {
   </header>
   `;
 
-  // We find existing header and replace it, OR prepend if it doesn't exist
   const existingHeader = mainContainer.querySelector('header');
   if (existingHeader) {
     existingHeader.outerHTML = headerHtml;
@@ -288,9 +322,7 @@ function injectHeaderAndModals(role) {
     mainContainer.insertAdjacentHTML('afterbegin', headerHtml);
   }
 
-  // Modals HTML
   const modalsHtml = `
-  <!-- Action Hub Modal -->
   <div id="action-hub-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
       <div class="bg-surface-container-lowest dark:bg-deep-pine rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-dusty-rose/20 dark:border-white/10 overflow-hidden">
           <div class="bg-soft-parchment dark:bg-surface-dim p-md flex justify-between items-center border-b border-dusty-rose/20 dark:border-white/10">
@@ -318,7 +350,6 @@ function injectHeaderAndModals(role) {
       </div>
   </div>
 
-  <!-- Help Modal -->
   <div id="help-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
       <div class="bg-surface-container-lowest dark:bg-deep-pine rounded-xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 dark:border-white/10 overflow-hidden">
           <div class="bg-soft-parchment dark:bg-surface-dim p-md flex justify-between items-center border-b border-dusty-rose/20 dark:border-white/10">
@@ -344,7 +375,6 @@ function injectHeaderAndModals(role) {
   `;
   document.body.insertAdjacentHTML('beforeend', modalsHtml);
 
-  // Bind Theme Toggle
   document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -352,7 +382,6 @@ function injectHeaderAndModals(role) {
     if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
   });
 
-  // Bind Action Hub
   const actionHubBtn = document.getElementById('btn-action-hub');
   const actionHubModal = document.getElementById('action-hub-modal');
   if (actionHubBtn && actionHubModal) {
@@ -366,7 +395,6 @@ function injectHeaderAndModals(role) {
     });
   }
 
-  // Bind Help Modal
   const helpBtn = document.getElementById('btn-global-help');
   const helpModal = document.getElementById('help-modal');
   if (helpBtn && helpModal) {
@@ -380,7 +408,6 @@ function injectHeaderAndModals(role) {
     });
   }
 
-  // Close modals on click outside
   document.addEventListener('click', (e) => {
     if (e.target.id === 'action-hub-modal') {
       actionHubModal.classList.add('hidden');
@@ -392,10 +419,6 @@ function injectHeaderAndModals(role) {
     }
   });
 
-  // Init Avatar using the already-fetched profile data in initNav (we must fetch it again or pass it)
-  // Let's rely on the topAvatar sync that happens inside initNav, we just need to ensure the IDs match!
-
-  // Global Search: redirect to catalog on Enter from any page
   const globalSearchInput = document.getElementById('global-search');
   if (globalSearchInput) {
     globalSearchInput.addEventListener('keydown', (e) => {
@@ -403,14 +426,10 @@ function injectHeaderAndModals(role) {
         e.preventDefault();
         const query = globalSearchInput.value.trim();
         if (!query) return;
-        // If we're already on the catalog page, just trigger the local filter
         if (window.location.pathname.includes('catalog.html')) {
-          // The catalog page's own debounce listener will handle it,
-          // but let's fire an input event to be sure
           globalSearchInput.dispatchEvent(new Event('input'));
           return;
         }
-        // Redirect to catalog with ?q= parameter
         window.location.href = `catalog.html?q=${encodeURIComponent(query)}`;
       }
     });
@@ -427,12 +446,32 @@ async function _navFetchBadges(role, userId) {
     const now = new Date().toISOString();
 
     if (role === 'librarian') {
-      const { data: overdueLoans, error: overdueErr } = await window.sbClient
-        .from('loans')
-        .select('id')
-        .eq('status', 'active')
-        .lt('due_date', now)
-        .limit(1);
+      const overduePromise = withTimeout(
+        window.sbClient
+          .from('loans')
+          .select('id')
+          .eq('status', 'active')
+          .lt('due_date', now)
+          .limit(1),
+        3000,
+        { data: [], error: null }
+      );
+
+      const resPromise = withTimeout(
+        window.sbClient
+          .from('reservations')
+          .select('id')
+          .eq('status', 'pending')
+          .limit(1),
+        3000,
+        { data: [], error: null }
+      );
+
+      const [overdueRes, resRes] = await Promise.all([overduePromise, resPromise]);
+      const overdueLoans = overdueRes.data;
+      const overdueErr = overdueRes.error;
+      const pendingRes = resRes.data;
+      const resErr = resRes.error;
 
       if (!overdueErr && overdueLoans && overdueLoans.length > 0) {
         overdueBadge?.classList.remove('hidden');
@@ -440,38 +479,46 @@ async function _navFetchBadges(role, userId) {
         overdueBadge?.classList.add('hidden');
       }
 
-      const { data: pendingRes, error: resErr } = await window.sbClient
-        .from('reservations')
-        .select('id')
-        .eq('status', 'pending')
-        .limit(1);
-
       if (!resErr && pendingRes && pendingRes.length > 0) {
         reservationsBadge?.classList.remove('hidden');
       } else {
         reservationsBadge?.classList.add('hidden');
       }
     } else {
-      const { data: studentOverdue, error: overdueErr } = await window.sbClient
-        .from('loans')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .lt('due_date', now)
-        .limit(1);
+      const overduePromise = withTimeout(
+        window.sbClient
+          .from('loans')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+          .lt('due_date', now)
+          .limit(1),
+        3000,
+        { data: [], error: null }
+      );
+
+      const resPromise = withTimeout(
+        window.sbClient
+          .from('reservations')
+          .select('id')
+          .eq('status', 'pending')
+          .eq('user_id', userId)
+          .limit(1),
+        3000,
+        { data: [], error: null }
+      );
+
+      const [overdueRes, resRes] = await Promise.all([overduePromise, resPromise]);
+      const studentOverdue = overdueRes.data;
+      const overdueErr = overdueRes.error;
+      const studentRes = resRes.data;
+      const resErr = resRes.error;
 
       if (!overdueErr && studentOverdue && studentOverdue.length > 0) {
         overdueBadge?.classList.remove('hidden');
       } else {
         overdueBadge?.classList.add('hidden');
       }
-
-      const { data: studentRes, error: resErr } = await window.sbClient
-        .from('reservations')
-        .select('id')
-        .eq('status', 'pending')
-        .eq('user_id', userId)
-        .limit(1);
 
       if (!resErr && studentRes && studentRes.length > 0) {
         reservationsBadge?.classList.remove('hidden');

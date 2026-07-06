@@ -9,6 +9,30 @@
 <script src="../js/nav.js"></script>
 <script src="../js/notifications.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+@keyframes slideDownNotif {
+    0%   { transform: translateY(-60px) scale(0.9); opacity: 0; }
+    55%  { transform: translateY(6px) scale(1.02); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes phonePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94, 0.6), 0 25px 50px rgba(0,0,0,0.5); }
+    50%       { box-shadow: 0 0 0 18px rgba(34,197,94, 0), 0 25px 50px rgba(0,0,0,0.5); }
+}
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.push-notif-card {
+    animation: slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.phone-mockup-wrap {
+    animation: phonePulse 1.8s ease-in-out infinite;
+}
+.push-overlay-bg {
+    animation: overlayFadeIn 0.3s ease both;
+}
+</style>
 
 </head>
 <body class="bg-soft-parchment text-deep-pine font-body-md antialiased flex">
@@ -57,30 +81,631 @@
 </div>
 
 <!-- Payment Modal -->
-<div id="payment-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
-    <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-sm mx-4 border border-dusty-rose/20 overflow-hidden">
-        <div class="bg-error-container/20 p-md flex justify-between items-center border-b border-error/10">
-            <h2 class="font-headline-md text-error font-bold flex items-center gap-2">
-                <span class="material-symbols-outlined">payments</span> Overdue Penalty
+<div id="payment-modal" style="display:none;" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 items-start justify-center pt-16">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-dusty-rose/20 flex flex-col" style="max-height:85vh; overflow-y:auto;">
+        <div class="bg-red-50 p-4 flex justify-between items-center border-b border-red-100 rounded-t-2xl">
+            <h2 class="font-headline-md text-red-700 font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">payments</span> Library Fine Payment
             </h2>
-            <button onclick="closePaymentModal()" class="text-dusty-rose hover:text-error p-1 rounded-lg transition-colors">
+            <button onclick="closePaymentModal()" class="text-gray-400 hover:text-red-600 p-1 rounded-lg transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div class="p-lg flex flex-col gap-md text-center">
-            <p class="font-body-md text-dusty-rose">To return this book, you must pay the accumulated late fine.</p>
-            <div class="text-4xl font-bold text-deep-pine my-4" id="fine-amount-display">0 FRW</div>
-            <p class="font-body-sm text-dusty-rose bg-surface-container-low p-3 rounded-lg border border-dusty-rose/10">
-                Mock Payment Gateway Simulation.<br/> Clicking Confirm will process a mock payment.
-            </p>
-            <button id="confirm-payment-btn" class="w-full py-3 bg-teal-blue hover:bg-secondary text-white font-label-lg rounded-lg shadow-md transition-colors flex items-center justify-center gap-2">
-                Confirm Payment
-            </button>
+        <div class="p-6 flex flex-col gap-4">
+            <!-- Screen 1: Payment Input -->
+            <div id="payment-screen-input" class="flex flex-col gap-4">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Fine Due</p>
+                    <div class="text-4xl font-bold text-gray-800 my-1" id="fine-amount-display">0 FRW</div>
+                    <div class="text-xs bg-green-50 text-green-700 font-semibold py-1 px-3 rounded-full inline-block mt-1">
+                        Recipient: 0799361513
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-semibold text-gray-700" for="custom-pay-amount">Amount You Are Paying (FRW) *</label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3 text-gray-400 font-mono text-sm font-bold">FRW</span>
+                        <input id="custom-pay-amount" type="number" min="1" oninput="updateChangePreview(); updateWalletBalanceIndicator();" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-4 text-gray-800 outline-none focus:border-teal-500 text-lg font-bold" style="padding-left: 3.5rem;" placeholder="Enter amount..." />
+                    </div>
+                    <div id="change-preview" class="hidden mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2"></div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold text-gray-700 mb-2 block">Select Payment Method</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectPaymentMethod('momo')" id="btn-pay-momo" class="py-3 px-1 rounded-xl border-2 border-yellow-400 bg-yellow-50 text-yellow-700 flex flex-col items-center justify-center gap-1 transition-all">
+                            <span class="material-symbols-outlined text-xl">phone_android</span>
+                            <span class="text-[10px] font-bold">MTN MoMo</span>
+                        </button>
+                        <button onclick="selectPaymentMethod('bk')" id="btn-pay-bk" class="py-3 px-1 rounded-xl border-2 border-gray-200 hover:border-blue-300 flex flex-col items-center justify-center gap-1 transition-all text-gray-600">
+                            <span class="material-symbols-outlined text-xl">account_balance</span>
+                            <span class="text-[10px] font-bold">BK Bank</span>
+                        </button>
+                        <button onclick="selectPaymentMethod('equity')" id="btn-pay-equity" class="py-3 px-1 rounded-xl border-2 border-gray-200 hover:border-red-300 flex flex-col items-center justify-center gap-1 transition-all text-gray-600">
+                            <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+                            <span class="text-[10px] font-bold">Equity Bank</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="form-pay-momo" class="payment-form flex flex-col gap-2">
+                    <label class="text-xs text-gray-600" for="momo-phone">MTN MoMo Phone Number *</label>
+                    <input id="momo-phone" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-yellow-400" placeholder="e.g. 0799361513 or +250799361513" type="tel" maxlength="15" oninput="updateWalletBalanceIndicator()" />
+                </div>
+                <div id="form-pay-bk" class="payment-form flex flex-col gap-2 hidden">
+                    <label class="text-xs text-gray-600" for="bk-account">BK Account or Phone Number *</label>
+                    <input id="bk-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-blue-400" placeholder="e.g. 078XXXXXXX or Account number" type="text" oninput="updateWalletBalanceIndicator()" />
+                </div>
+                <div id="form-pay-equity" class="payment-form flex flex-col gap-2 hidden">
+                    <label class="text-xs text-gray-600" for="equity-account">Equity Account or Phone Number *</label>
+                    <input id="equity-account" class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 outline-none focus:border-red-400" placeholder="e.g. 1012XXXXXXXX or Phone number" type="text" oninput="updateWalletBalanceIndicator()" />
+                </div>
+
+                <div id="wallet-balance-indicator" class="hidden mt-1 text-xs font-semibold py-2 px-3 rounded-xl flex items-center gap-2"></div>
+
+                <button id="confirm-payment-btn" onclick="startPaymentCheckout()" class="mt-2 w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-lg">phone_android</span> Pay via MTN MoMo
+                </button>
+            </div>
+
+            <!-- Screen 2: Processing Spinner -->
+            <div id="payment-screen-processing" class="flex flex-col items-center justify-center py-12 gap-4" style="display:none !important;">
+                <div class="w-16 h-16 border-4 border-yellow-200 border-t-yellow-500 rounded-full animate-spin"></div>
+                <div class="text-center">
+                    <h3 class="font-semibold text-gray-800" id="processing-title">Connecting to Gateway...</h3>
+                    <p class="text-sm text-gray-500 mt-1" id="processing-subtitle">Initiating secure transaction...</p>
+                </div>
+            </div>
+
+            <!-- Screen 3: Waiting for Phone Confirmation & Verification Code -->
+            <div id="payment-screen-waiting" style="display:none;" class="flex flex-col items-center justify-center py-6 gap-4">
+                <div style="position:relative; width:52px; height:52px;">
+                    <div style="position:absolute; inset:0; border-radius:50%; background:rgba(234,179,8,0.15); animation:phonePulse 1.8s ease-in-out infinite;"></div>
+                    <span class="material-symbols-outlined" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:28px; color:#ca8a04; font-variation-settings:'FILL' 1;">sms_failed</span>
+                </div>
+                <div class="text-center w-full">
+                    <h3 class="font-semibold text-gray-800 text-base">Authorize Library Payment</h3>
+                    <p class="text-xs text-gray-500 mt-1">We sent a verification code to <span id="waiting-phone-display" class="font-bold text-gray-700">your number</span> via WhatsApp.</p>
+                </div>
+                
+                <!-- OTP Code input -->
+                <div class="w-full flex flex-col gap-1 text-left">
+                    <label class="text-[11px] font-semibold text-gray-700" for="otp-input">6-Digit Verification Code *</label>
+                    <input id="otp-input" type="text" maxlength="6" class="w-full text-center tracking-[8px] font-mono text-lg bg-gray-50 border border-gray-200 rounded-xl py-2 px-3 font-bold outline-none focus:border-yellow-500" placeholder="------" />
+                </div>
+
+                <!-- Verify button -->
+                <button id="verify-payment-btn" onclick="verifyAndCompletePayment()" class="w-full py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm">
+                    <span class="material-symbols-outlined text-lg">verified</span> Verify &amp; Complete Return
+                </button>
+
+                <!-- WhatsApp click button -->
+                <button onclick="openWhatsAppChat()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-[11px] border-none cursor-pointer">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M12.004 2c-5.518 0-9.996 4.477-9.996 9.995 0 1.763.459 3.42 1.263 4.872l-1.218 4.453 4.557-1.196c1.393.762 2.977 1.194 4.658 1.194 5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.477-9.995-9.996-9.995zm.002 18.291c-1.572 0-3.109-.425-4.455-1.229l-.319-.19-2.646.695.706-2.583-.207-.33c-.876-1.396-1.34-3.007-1.34-4.66.002-4.908 3.996-8.903 8.907-8.903 4.908 0 8.903 3.995 8.903 8.903 0 4.91-3.995 8.907-8.909 8.907z"/></svg>
+                    Receive Code via WhatsApp (Send)
+                </button>
+
+                <button onclick="resetPaymentScreens()" class="text-xs text-gray-400 hover:text-gray-600 transition-colors bg-none border-none cursor-pointer">
+                    ← Cancel &amp; go back
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ====== PUSH NOTIFICATION OVERLAY (completely separate, full-screen, z-[9999]) ====== -->
+<div id="push-notif-overlay" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; gap:16px;" class="push-overlay-bg">
+
+    <!-- Instruction text -->
+    <p style="color:#d1fae5; font-size:13px; font-weight:600; text-align:center; margin-bottom:4px;">
+        📲 Push notification sent to <span id="sent-to-phone" style="color:#fff; font-weight:700;">your number</span>
+    </p>
+
+    <!-- Phone Mockup -->
+    <div class="phone-mockup-wrap" style="
+        width: 240px;
+        border: 6px solid #1e293b;
+        border-radius: 40px;
+        background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        height: 440px;
+        overflow: visible;
+    ">
+        <!-- Notch -->
+        <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:80px; height:22px; background:#0f172a; border-radius:0 0 16px 16px; z-index:5;"></div>
+
+        <!-- Status Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:28px 16px 4px; z-index:4;">
+            <span id="phone-number-display" style="font-size:9px; color:#94a3b8; font-family:monospace; font-weight:700;">+250...</span>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <span style="font-size:9px; color:#94a3b8; font-family:monospace;">4G</span>
+                <span class="material-symbols-outlined" style="font-size:11px; color:#94a3b8;">signal_cellular_alt</span>
+                <span class="material-symbols-outlined" style="font-size:11px; color:#94a3b8;">battery_5_bar</span>
+            </div>
+        </div>
+
+        <!-- Clock -->
+        <div style="display:flex; flex-direction:column; align-items:center; margin:8px 0 8px;">
+            <span id="phone-clock" style="color:#fff; font-weight:800; font-size:36px; letter-spacing:-2px; line-height:1;">--:--</span>
+            <span id="phone-date" style="color:#64748b; font-size:9px; margin-top:2px;">Loading...</span>
+        </div>
+
+        <!-- Stacked Notifications List -->
+        <div style="display:flex; flex-direction:column; gap:8px; margin:0 8px; overflow:visible;">
+            <!-- Bank/MoMo Push Notif Card -->
+            <div class="push-notif-card" style="border-radius:14px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+                <!-- Provider banner -->
+                <div id="push-provider-header" style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:linear-gradient(135deg,#FFCC00,#FF8C00);">
+                    <span class="material-symbols-outlined" style="font-size:16px; color:#fff; font-variation-settings:'FILL' 1;">notifications_active</span>
+                    <div style="flex:1; min-w:0;">
+                        <div id="prompt-app-title" style="font-size:10px; font-weight:800; color:#fff; text-transform:uppercase; letter-spacing:0.3px; truncate">MTN MoMo</div>
+                        <div style="font-size:8px; color:rgba(255,255,255,0.8); truncate">Payment Authorization</div>
+                    </div>
+                    <div style="font-size:8px; color:rgba(255,255,255,0.6); font-family:monospace; flex-shrink:0;">now</div>
+                </div>
+
+                <!-- Notification body -->
+                <div style="background:rgba(255,255,255,0.97); padding:10px 12px; display:flex; flex-direction:column; gap:8px;">
+                    <p style="font-size:10px; color:#374151; line-height:1.4; margin:0;">
+                        Pay <strong id="approval-amount-display" style="color:#059669; font-size:11px;">0 FRW</strong>
+                        to <strong style="color:#111827;">0799361513</strong> (Library Fine)
+                    </p>
+                    <!-- Approve / Decline -->
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="declinePushPayment()" style="flex:1; padding:6px; border-radius:8px; background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:2px; transition:background 0.2s;">
+                            Decline
+                        </button>
+                        <button onclick="approvePushPayment()" style="flex:1; padding:6px; border-radius:8px; background:#059669; color:#fff; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:2px; transition:background 0.2s; box-shadow:0 2px 6px rgba(5,150,105,0.3);">
+                            Approve
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WhatsApp Message Card -->
+            <div class="whatsapp-notif-card" style="border-radius:14px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.4); animation: slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;">
+                <div style="display:flex; align-items:center; gap:6px; padding:8px 12px; background:#075E54;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff" style="flex-shrink:0;"><path d="M12.004 2c-5.518 0-9.996 4.477-9.996 9.995 0 1.763.459 3.42 1.263 4.872l-1.218 4.453 4.557-1.196c1.393.762 2.977 1.194 4.658 1.194 5.518 0 9.996-4.477 9.996-9.995 0-5.518-4.477-9.995-9.996-9.995zm.002 18.291c-1.572 0-3.109-.425-4.455-1.229l-.319-.19-2.646.695.706-2.583-.207-.33c-.876-1.396-1.34-3.007-1.34-4.66.002-4.908 3.996-8.903 8.907-8.903 4.908 0 8.903 3.995 8.903 8.903 0 4.91-3.995 8.907-8.909 8.907z"/></svg>
+                    <div style="flex:1; min-w:0;">
+                        <div style="font-size:10px; font-weight:800; color:#fff;">WhatsApp</div>
+                        <div style="font-size:8px; color:rgba(255,255,255,0.8); truncate">From: Library Hub Gateway</div>
+                    </div>
+                    <div style="font-size:8px; color:rgba(255,255,255,0.6); font-family:monospace; flex-shrink:0;">now</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.97); padding:10px 12px;">
+                    <p style="font-size:10px; color:#374151; line-height:1.4; margin:0;">
+                        Your library payment verification code is <strong id="whatsapp-otp-display" style="font-size:12px; color:#075E54; font-family:monospace; letter-spacing:1px;">123456</strong>. Enter it in the portal to authorize.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swipe hint -->
+        <div style="display:flex; flex-direction:column; align-items:center; margin-top:auto; padding-bottom:16px;">
+            <span class="material-symbols-outlined" style="font-size:18px; color:#475569;">swipe_up</span>
+            <span style="font-size:9px; color:#475569;">Swipe up to unlock</span>
+        </div>
+    </div>
+
+    <!-- Cancel button -->
+    <button onclick="resetPaymentScreens()" style="color:#fca5a5; font-size:12px; font-weight:600; background:none; border:none; cursor:pointer; margin-top:8px;">
+        ← Go back &amp; change details
+    </button>
+</div>
+
 <script>
+// Mock Wallet System to simulate telecom/bank balances
+const MockWalletSystem = {
+    getWallets() {
+        let w = localStorage.getItem('mock_wallets');
+        if (!w) {
+            const seed = {
+                "momo:0799361513": 50000, // Merchant
+                "momo:0788123456": 15000, // Rich MoMo
+                "momo:0788999999": 1000,  // Low MoMo
+                "momo:0788000000": 0,     // Zero MoMo
+                "bk:123456": 20000,       // BK account
+                "bk:999999": 500,         // Low BK account
+                "equity:123456": 25000,   // Equity account
+                "equity:999999": 800      // Low Equity
+            };
+            localStorage.setItem('mock_wallets', JSON.stringify(seed));
+            return seed;
+        }
+        return JSON.parse(w);
+    },
+    
+    getBalance(method, account) {
+        const wallets = this.getWallets();
+        const key = `${method}:${account}`;
+        if (wallets[key] !== undefined) {
+            return wallets[key];
+        }
+        // If unknown account, initialize with a default starting balance of 8000 FRW
+        wallets[key] = 8000;
+        localStorage.setItem('mock_wallets', JSON.stringify(wallets));
+        return 8000;
+    },
+    
+    setBalance(method, account, amount) {
+        const wallets = this.getWallets();
+        const key = `${method}:${account}`;
+        wallets[key] = amount;
+        localStorage.setItem('mock_wallets', JSON.stringify(wallets));
+    },
+    
+    hasEnough(method, account, amount) {
+        return this.getBalance(method, account) >= amount;
+    },
+    
+    transfer(fromMethod, fromAccount, toMethod, toAccount, amount) {
+        const fromBal = this.getBalance(fromMethod, fromAccount);
+        const toBal = this.getBalance(toMethod, toAccount);
+        if (fromBal < amount) return false;
+        
+        this.setBalance(fromMethod, fromAccount, fromBal - amount);
+        this.setBalance(toMethod, toAccount, toBal + amount);
+        return true;
+    }
+};
+
+let currentPaymentMethod = 'momo';
+let currentFineAmount = 0;
+let currentLoanId = '';
+let currentBookId = '';
+let currentCopiesCount = 0;
+let pendingPaymentData = null; // holds data for the push approval step
+let currentOTP = ''; // Generated 6-digit WhatsApp verification code
+
+function updatePhoneClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const clockEl = document.getElementById('phone-clock');
+    const dateEl = document.getElementById('phone-date');
+    if (clockEl) clockEl.textContent = `${h}:${m}`;
+    if (dateEl) dateEl.textContent = dateStr;
+}
+
+function updateWalletBalanceIndicator() {
+    const inputVal = currentPaymentMethod === 'momo' 
+        ? document.getElementById('momo-phone').value.trim() 
+        : currentPaymentMethod === 'bk' 
+            ? document.getElementById('bk-account').value.trim() 
+            : document.getElementById('equity-account').value.trim();
+            
+    const indicator = document.getElementById('wallet-balance-indicator');
+    if (!indicator) return;
+    
+    if (!inputVal) {
+        indicator.classList.add('hidden');
+        return;
+    }
+    
+    // Validate Momo phone format specifically
+    if (currentPaymentMethod === 'momo' && !/^\+?[0-9]{8,15}$/.test(inputVal)) {
+        indicator.classList.add('hidden');
+        return;
+    }
+    
+    const balance = MockWalletSystem.getBalance(currentPaymentMethod, inputVal);
+    indicator.classList.remove('hidden');
+    
+    const fineAmt = currentFineAmount || 0;
+    const payAmt = parseFloat(document.getElementById('custom-pay-amount').value) || fineAmt;
+    
+    if (balance >= payAmt) {
+        indicator.className = 'mt-1 text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 w-full bg-sage-green/10 text-sage-green border border-sage-green/20';
+        indicator.innerHTML = `<span class="material-symbols-outlined text-[15px]">account_balance_wallet</span> Available Balance: <strong>${balance.toLocaleString()} FRW</strong> (Sufficient)`;
+    } else {
+        indicator.className = 'mt-1 text-xs font-semibold py-2 px-3 rounded-lg flex items-center gap-1.5 w-full bg-error-container text-error border border-error/20';
+        indicator.innerHTML = `<span class="material-symbols-outlined text-[15px]">warning</span> Available Balance: <strong>${balance.toLocaleString()} FRW</strong> (Insufficient Funds)`;
+    }
+}
+
+function selectPaymentMethod(method) {
+    currentPaymentMethod = method;
+    
+    // Reset tabs styles
+    const btnMomo = document.getElementById('btn-pay-momo');
+    const btnBk = document.getElementById('btn-pay-bk');
+    const btnEquity = document.getElementById('btn-pay-equity');
+    
+    [btnMomo, btnBk, btnEquity].forEach(btn => {
+        if (!btn) return;
+        btn.className = 'py-2 px-1 rounded-lg border border-dusty-rose/20 hover:border-teal-blue/50 flex flex-col items-center justify-center gap-1 transition-all text-deep-pine';
+    });
+    
+    // Hide all forms
+    document.querySelectorAll('.payment-form').forEach(el => el.classList.add('hidden'));
+    
+    const activeBtn = document.getElementById(`btn-pay-${method}`);
+    if (activeBtn) {
+        activeBtn.className = 'py-2 px-1 rounded-lg border border-teal-blue bg-teal-blue/5 text-teal-blue flex flex-col items-center justify-center gap-1 transition-all';
+    }
+    
+    const activeForm = document.getElementById(`form-pay-${method}`);
+    if (activeForm) activeForm.classList.remove('hidden');
+    
+    // Update balance indicator for the selected tab
+    updateWalletBalanceIndicator();
+    
+    // Update button text
+    const confirmBtn = document.getElementById('confirm-payment-btn');
+    if (confirmBtn) {
+        const methodNames = { momo: 'MTN MoMo', bk: 'BK Bank', equity: 'Equity Bank' };
+        confirmBtn.textContent = `Pay via ${methodNames[method]}`;
+    }
+}
+
+function generateOTP() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+    function updateChangePreview() {
+        const input = parseFloat(document.getElementById('custom-pay-amount').value) || 0;
+        const fine = parseFloat(currentFineAmount) || 0;
+        const preview = document.getElementById('change-preview');
+        if (!preview) return;
+        if (input <= 0) {
+            preview.classList.add('hidden');
+            return;
+        }
+        preview.classList.remove('hidden');
+        const diff = input - fine;
+        if (diff > 0) {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-sage-green/10 text-sage-green border border-sage-green/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">account_balance_wallet</span> Change of <strong>${diff.toLocaleString()} FRW</strong> will be refunded back to your account.`;
+        } else if (diff === 0) {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-teal-blue/10 text-teal-blue border border-teal-blue/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">check_circle</span> Exact amount — no change.`;
+        } else {
+            preview.className = 'mt-1 py-2 px-3 rounded-lg text-xs font-semibold flex items-center gap-2 bg-error-container text-error border border-error/20';
+            preview.innerHTML = `<span class="material-symbols-outlined text-[15px]">error</span> Amount is <strong>${Math.abs(diff).toLocaleString()} FRW short</strong> of the required fine.`;
+        }
+    }
+
+function getWhatsAppCleanNumber(number) {
+    let cleaned = number.replace(/\D/g, ''); // keep only digits
+    if (cleaned.startsWith('0')) {
+        cleaned = '250' + cleaned.substring(1); // prepend Rwanda code
+    }
+    if (!cleaned.startsWith('250') && cleaned.length === 9) {
+        cleaned = '250' + cleaned;
+    }
+    return cleaned;
+}
+
+function openWhatsAppChat() {
+    if (!pendingPaymentData) return;
+    const { inputVal, enteredAmount } = pendingPaymentData;
+    const cleaned = getWhatsAppCleanNumber(inputVal);
+    const text = encodeURIComponent(`Your Library fine payment verification code is *${currentOTP}*. Please enter this code in the portal to confirm your payment of ${enteredAmount.toLocaleString()} FRW.`);
+    window.open(`https://wa.me/${cleaned}?text=${text}`, '_blank');
+}
+
+async function startPaymentCheckout() {
+    const inputVal = currentPaymentMethod === 'momo' 
+        ? document.getElementById('momo-phone').value.trim() 
+        : currentPaymentMethod === 'bk' 
+            ? document.getElementById('bk-account').value.trim() 
+            : document.getElementById('equity-account').value.trim();
+
+    if (!inputVal) {
+        showToast('Please enter your account or phone details.', 'error');
+        return;
+    }
+
+    if (currentPaymentMethod === 'momo' && !/^\+?[0-9]{8,15}$/.test(inputVal)) {
+        showToast('Please enter a valid phone number (8 to 15 digits)', 'error');
+        return;
+    }
+
+    const enteredAmount = parseFloat(document.getElementById('custom-pay-amount').value) || 0;
+    if (enteredAmount <= 0) {
+        showToast('Please enter the amount you wish to pay.', 'error');
+        return;
+    }
+    if (enteredAmount < currentFineAmount) {
+        const shortfall = currentFineAmount - enteredAmount;
+        showToast(`Amount too low — you are ${shortfall.toLocaleString()} FRW short of the required fine.`, 'error');
+        return;
+    }
+
+    // Automatically check if payer has enough money in their balance
+    const currentBalance = MockWalletSystem.getBalance(currentPaymentMethod, inputVal);
+    if (currentBalance < enteredAmount) {
+        showToast(`Transaction Failed: Insufficient funds. Your balance is ${currentBalance.toLocaleString()} FRW, but this payment requires ${enteredAmount.toLocaleString()} FRW.`, 'error');
+        const failCheck = document.getElementById('simulate-insufficient-funds');
+        if (failCheck) failCheck.checked = true;
+        return;
+    } else {
+        const failCheck = document.getElementById('simulate-insufficient-funds');
+        if (failCheck) failCheck.checked = false;
+    }
+
+    // Show processing spinner inside modal
+    document.getElementById('payment-screen-input').classList.add('hidden');
+    const procEl = document.getElementById('payment-screen-processing');
+    procEl.style.removeProperty('display');
+    procEl.style.display = 'flex';
+
+    const providers = { momo: 'MTN MoMo Pay', bk: 'Bank of Kigali (BK)', equity: 'Equity Bank' };
+    document.getElementById('processing-title').textContent = `Connecting to ${providers[currentPaymentMethod]}...`;
+    document.getElementById('processing-subtitle').textContent = `Initiating secure transaction with the provider...`;
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Generate unique 6-digit OTP code for WhatsApp
+    currentOTP = generateOTP();
+
+    // Store payment data for use when user verifies or approves
+    pendingPaymentData = { inputVal, enteredAmount };
+
+    const smsProviderNames = { momo: 'MTN MoMo', bk: 'BK Mobile Banking', equity: 'Equity Bank Mobile' };
+    const providerColors = {
+        momo: 'linear-gradient(135deg, #FFCC00 0%, #FF8C00 100%)',
+        bk: 'linear-gradient(135deg, #0033A0 0%, #0056D2 100%)',
+        equity: 'linear-gradient(135deg, #B22222 0%, #DC143C 100%)'
+    };
+
+    // Update phone mockup elements
+    document.getElementById('prompt-app-title').textContent = smsProviderNames[currentPaymentMethod];
+    const header = document.getElementById('push-provider-header');
+    if (header) header.style.background = providerColors[currentPaymentMethod];
+
+    const enteredAmt = parseFloat(document.getElementById('custom-pay-amount').value) || currentFineAmount;
+    document.getElementById('approval-amount-display').textContent = `${enteredAmt.toLocaleString()} FRW`;
+    document.getElementById('payer-phone-display').textContent = inputVal;
+    document.getElementById('sent-to-phone').textContent = inputVal;
+    document.getElementById('phone-number-display').textContent = inputVal;
+
+    // Update OTP code in mock WhatsApp notification on lock screen
+    const whatsappOtpDisplay = document.getElementById('whatsapp-otp-display');
+    if (whatsappOtpDisplay) whatsappOtpDisplay.textContent = currentOTP;
+
+    // Clear computer screen OTP input field
+    const otpInput = document.getElementById('otp-input');
+    if (otpInput) otpInput.value = '';
+
+    // Restart the slide-in animations
+    const notifCard = document.querySelector('.push-notif-card');
+    if (notifCard) {
+        notifCard.style.animation = 'none';
+        void notifCard.offsetWidth; // force reflow
+        notifCard.style.animation = 'slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both';
+    }
+    const waCard = document.querySelector('.whatsapp-notif-card');
+    if (waCard) {
+        waCard.style.animation = 'none';
+        void waCard.offsetWidth; // force reflow
+        waCard.style.animation = 'slideDownNotif 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both';
+    }
+
+    updatePhoneClock();
+
+    // Hide modal processing screen, show waiting screen
+    procEl.style.display = 'none';
+    const waitEl = document.getElementById('payment-screen-waiting');
+    if (waitEl) {
+        waitEl.style.display = 'flex';
+        const wPhone = document.getElementById('waiting-phone-display');
+        if (wPhone) wPhone.textContent = inputVal;
+    }
+
+    // Show the SEPARATE push notification overlay (z-index 9999)
+    const overlay = document.getElementById('push-notif-overlay');
+    overlay.style.display = 'flex';
+}
+
+async function approvePushPayment() {
+    // Shortcuts the flow by auto-filling correct OTP and proceeding to verify
+    const otpInput = document.getElementById('otp-input');
+    if (otpInput) otpInput.value = currentOTP;
+    
+    // Hide phone overlay immediately
+    document.getElementById('push-notif-overlay').style.display = 'none';
+
+    await verifyAndCompletePayment();
+}
+
+async function verifyAndCompletePayment() {
+    if (!pendingPaymentData) {
+        showToast('Payment session expired. Please try again.', 'error');
+        resetPaymentScreens();
+        return;
+    }
+
+    const { inputVal, enteredAmount } = pendingPaymentData;
+
+    const otpInput = document.getElementById('otp-input');
+    const enteredCode = otpInput ? otpInput.value.trim() : '';
+
+    if (!enteredCode) {
+        showToast('Please enter the 6-digit verification code.', 'error');
+        return;
+    }
+
+    if (enteredCode !== currentOTP) {
+        showToast('Verification failed: Incorrect code. Please check your WhatsApp.', 'error');
+        return;
+    }
+
+    if (!currentFineAmount || currentFineAmount <= 0) {
+        showToast('Payment failed: Invalid fine amount.', 'error');
+        closePaymentModal();
+        return;
+    }
+
+    // Hide overlay, hide waiting screen, show processing spinner in modal
+    document.getElementById('push-notif-overlay').style.display = 'none';
+    const waitEl2 = document.getElementById('payment-screen-waiting');
+    if (waitEl2) waitEl2.style.display = 'none';
+    const procEl2 = document.getElementById('payment-screen-processing');
+    procEl2.style.removeProperty('display');
+    procEl2.style.display = 'flex';
+    document.getElementById('processing-title').textContent = 'Authorizing payment...';
+    document.getElementById('processing-subtitle').textContent = 'Verification successful — transferring funds...';
+
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1800));
+
+        const success = MockWalletSystem.transfer(currentPaymentMethod, inputVal, 'momo', '0799361513', enteredAmount);
+        if (!success) throw new Error('Insufficient funds on account balance.');
+
+        await processReturn(currentLoanId, currentBookId, currentCopiesCount);
+        const change = enteredAmount - currentFineAmount;
+
+        if (change > 0) {
+            MockWalletSystem.transfer('momo', '0799361513', currentPaymentMethod, inputVal, change);
+        }
+
+        pendingPaymentData = null;
+        document.getElementById('payment-screen-processing').style.display = 'none';
+        closePaymentModal();
+        if (change > 0) {
+            showToast(`✅ Payment of ${enteredAmount.toLocaleString()} FRW approved! Book returned. Change of ${change.toLocaleString()} FRW refunded to your account.`);
+        } else {
+            showToast(`✅ Payment of ${currentFineAmount.toLocaleString()} FRW approved! Book returned successfully.`);
+        }
+    } catch (err) {
+        showToast(`Payment failed: ` + (err.message || 'Transaction declined.'), 'error');
+        resetPaymentScreens();
+    }
+}
+
+function declinePushPayment() {
+    pendingPaymentData = null;
+    showToast('Payment declined on your phone. Transaction cancelled.', 'error');
+    resetPaymentScreens();
+}
+
+function resetPaymentScreens() {
+    // Hide the push notification overlay
+    const overlay = document.getElementById('push-notif-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // Hide processing and waiting screens, show input
+    const procEl = document.getElementById('payment-screen-processing');
+    if (procEl) procEl.style.display = 'none';
+    const waitEl = document.getElementById('payment-screen-waiting');
+    if (waitEl) waitEl.style.display = 'none';
+    const inputEl = document.getElementById('payment-screen-input');
+    if (inputEl) inputEl.classList.remove('hidden');
+    
+    // Clear OTP inputs
+    const otpInput = document.getElementById('otp-input');
+    if (otpInput) otpInput.value = '';
+
+    pendingPaymentData = null;
+    updateWalletBalanceIndicator();
+    updateWalletBalanceIndicator();
+}
+
 function showToast(message, type = 'success') {
     const existing = document.getElementById('toast-notification');
     if (existing) existing.remove();
@@ -95,27 +720,17 @@ function showToast(message, type = 'success') {
 
 async function returnBook(loanId, bookId, currentCopies, fineAmount = 0) {
     if (fineAmount > 0) {
-        // Open payment modal
-        document.getElementById('payment-modal').style.display = 'flex';
+        currentFineAmount = fineAmount;
+        currentLoanId = loanId;
+        currentBookId = bookId;
+        currentCopiesCount = currentCopies;
+
+        // Open payment modal using style.display so it works regardless of CSS classes
+        const modalEl = document.getElementById('payment-modal');
+        if (modalEl) modalEl.style.display = 'flex';
         document.getElementById('fine-amount-display').textContent = `${fineAmount} FRW`;
-        
-        // Override the confirm button action to process the return after payment
-        document.getElementById('confirm-payment-btn').onclick = async function() {
-            this.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Processing...';
-            this.disabled = true;
-            try {
-                // Simulate payment delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                await processReturn(loanId, bookId, currentCopies);
-                closePaymentModal();
-                showToast('Payment successful! Book returned.');
-            } catch (err) {
-                showToast(err.message || 'Payment or return failed.', 'error');
-            } finally {
-                this.innerHTML = 'Confirm Payment';
-                this.disabled = false;
-            }
-        };
+        selectPaymentMethod('momo');
+        resetPaymentScreens();
         return;
     }
 
@@ -135,7 +750,12 @@ async function processReturn(loanId, bookId, currentCopies) {
 }
 
 function closePaymentModal() {
-    document.getElementById('payment-modal').style.display = 'none';
+    const modalEl = document.getElementById('payment-modal');
+    if (modalEl) modalEl.style.display = 'none';
+    // Also hide overlay
+    const overlay = document.getElementById('push-notif-overlay');
+    if (overlay) overlay.style.display = 'none';
+    resetPaymentScreens();
 }
 
 async function init() {
