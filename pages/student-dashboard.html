@@ -534,7 +534,7 @@
         document.getElementById('processing-title').textContent = `Connecting to ${providers[currentPaymentMethod]}...`;
         document.getElementById('processing-subtitle').textContent = `Initiating secure transaction with the provider...`;
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 600));
 
         // Store payment data for push approval step
         pendingPaymentData = { inputVal, enteredAmount };
@@ -631,7 +631,7 @@
         }
 
         // After a short delay, hide the overlay and show OTP screen inside modal
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1200));
         document.getElementById('push-notif-overlay').style.display = 'none';
 
         // Show Screen 3 (OTP verification)
@@ -691,7 +691,7 @@
         const { inputVal, enteredAmount } = pendingPaymentData;
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1800));
+            await new Promise(resolve => setTimeout(resolve, 800));
 
             const success = MockWalletSystem.transfer(currentPaymentMethod, inputVal, 'momo', '0799361513', enteredAmount);
             if (!success) throw new Error('Insufficient funds on account balance.');

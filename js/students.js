@@ -198,7 +198,7 @@ function closeAddStudentModal() {
     document.getElementById('add-student-form').reset();
 }
 
-async // Simple SHA-256 hashing utility (for demonstration only)
+// Simple SHA-256 hashing utility (for demonstration only)
 // Returns hex string of the hashed password.
 async function hashPassword(password) {
   const encoder = new TextEncoder();
@@ -212,6 +212,8 @@ async function hashPassword(password) {
 
 // Expose globally for other scripts
 window.hashPassword = hashPassword;
+
+async function submitAddStudent() {
     const fullName = document.getElementById('add-full-name').value.trim();
     const userIdInput = document.getElementById('add-user-id').value.trim();
     const password = document.getElementById('add-password').value;

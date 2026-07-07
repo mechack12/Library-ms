@@ -539,7 +539,7 @@ async function startPaymentCheckout() {
     document.getElementById('processing-title').textContent = `Connecting to ${providers[currentPaymentMethod]}...`;
     document.getElementById('processing-subtitle').textContent = `Initiating secure transaction with the provider...`;
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 600));
 
     // Generate unique 6-digit OTP code for WhatsApp
     currentOTP = generateOTP();
@@ -653,7 +653,7 @@ async function verifyAndCompletePayment() {
     document.getElementById('processing-subtitle').textContent = 'Verification successful — transferring funds...';
 
     try {
-        await new Promise(resolve => setTimeout(resolve, 1800));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         const success = MockWalletSystem.transfer(currentPaymentMethod, inputVal, 'momo', '0799361513', enteredAmount);
         if (!success) throw new Error('Insufficient funds on account balance.');
